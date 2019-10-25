@@ -47,8 +47,8 @@ lambda x, y: cos(x) * sin(y)
 
 The core operating principle will be:
 
-1. Instantiate a specific class of Automatic Differentiation from the **pyad** package (for instance `my_ad = pyad.forwardmode()`)
-2. Define a function to be differentiated (or alternatively use a lambda function inline) `my_ad.function(test_function)` or `my_ad.function(lambda x: 2 * x)`
+1. Define a function to be differentiated (or alternatively use a lambda function inline) `def: test_function(x) return 2 * x` or `lambda x: 2 * x`
+2. Instantiate a specific class of Automatic Differentiation from the **pyad** package (for instance `my_ad = pyad.forwardmode(test_function)` or `my_ad = pyad.forwardmode(lambda x: 2 * x)` 
 3. Set up parameters with which to differentiate - this will need to be the seed of each of the variables and the initial derivative conditions (usually 1). `my_ad.initial_conditions(2.5), my_ad.derivative_seeds(1)` or `my_ad.initial_conditions({x:2.5, y:5.8}), my_ad.derivative_seeds({x:1, y:1)`
 4. Compute the derivative - this should be an explicit step as the computational time may be non-negligible. `my_ad.compute_derivative()` - this computation could have a number of options
     * Allow the user control of whether or not to keep the full trace table for inspection (a must for reverse mode).
@@ -66,12 +66,10 @@ The following is an example of how to use the pyad package to differentiate a us
 ```python
 import pyad
 
-ad_forward = pyad.forwardmode()
-
 def simple_function(x, y):
     return 2 * sin(x) + cos(y + 4)
 
-ad_forward.function(simple_function)
+ad_forward.pyad.forwardmode(simple_function)
 ad_forward.initial_conditions({x:3,y:0.5})
 ad_forward.derivative_seeds({x:1,y:1})
 
