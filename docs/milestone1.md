@@ -26,19 +26,19 @@ It is able to compute derivatives to machine precision in a fast, efficient way.
 ## Background
 To see how automatic differentiation works, consider the following simple example:
 
-$f(x) = sin(ln(x^2))$
+<img src=math1.png width="150">
 
-Recall the chain rule, which states that if we have a function $h\left(u\left(t\right)\right)$,  then
+Recall the chain rule, which states that if we have a function h(u(t)),  then
 
-$\dfrac{\partial h}{\partial t}$ =$\dfrac{\partial h}{\partial u}\dfrac{\partial u}{\partial t}$
+<img src=math2.png width="100">
 
-We can differentiate $f(x)$ symbolically using the chain rule:
+We can differentiate f(x) symbolically using the chain rule:
 
- $\dfrac{\partial f}{\partial x} = cos(ln(x^2))\dfrac{\partial }{\partial x}[ln(x^2)] = \frac{cos(ln(x^2))}{x^2}\dfrac{\partial }{\partial x}[x^2] = \frac{2cos(ln(x^2))}{x}$
+<img src=math3.png width="450">
  
 and evaluate the function and its derivative at, for example, a=1:
 
-$f(1) = sin(ln(1^2)) = 1$, $f^\prime(1) = \frac{2cos(ln(1^2))}{1} = 2$
+<img src=math4.png width="350">
  
 The first derivative is rather ugly, and it will keep getting uglier if we take higher order derivatives. Consider the following similar but slighly modified approach:
 
