@@ -82,5 +82,7 @@ class node():
 - `plotly` and `Graphviz` to visualize the computational graph
 
 ### Elementary Functions
-We will deal with elementary functions using `numpy`.
+We will deal with elementary functions using `numpy`. But we'll wrap `numpy` functions with `pyad` and overwrite some of the functions potentially. 
+
+For example, user will call `pyad.sin(x)` .
 
