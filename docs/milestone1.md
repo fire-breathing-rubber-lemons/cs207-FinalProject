@@ -65,7 +65,7 @@ class forwardmode():
 
 
 class node():
-	'''Store current function values and derivatvie values'''
+	'''Store current function values and derivatve values'''
 	def __init__(self, val, parent):
 		'''store values in its parent node'''
 
