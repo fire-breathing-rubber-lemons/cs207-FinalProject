@@ -79,19 +79,19 @@ from pyad import forwardmode
 
 ### Interaction Theory
 
-In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as a `forward-mode-differentiator` or `reverse-mode-differentiator`. The user will create a blank instance of the differentator object which will then persist. By design this will be a blank slate and there will not be a specific set of default inputs as each user may have a very different use case (differentating a single variable or multi-variable function for instance).
+In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as `forwardmode`. The user will create a blank instance of the differentator object which will then persist. By design this will be a blank slate and there will not be a specific set of default inputs as each user may have a very different use case (differentating a single variable or multi-variable function for instance).
 
 Simplicity for the user will be important. The idea is not to expose each stage of the AD process to the user but allow the user to very quickly get a result and then provide useful tools (methods) for the user to interrogate the results such as return a graph of the trace.
 
 The user should be able to specify any differentiable function in the standard format, either a defined python function or a lambda function:
 ```python
 def test_function(x,y):
-    cos_x = cos(x)
-    sin_y = sin(y)
+    cos_x = pyad.cos(x)
+    sin_y = pyad.sin(y)
     output = cos_x * sin_y
     return output
 
-lambda x, y: cos(x) * sin(y)
+lambda x, y: pyad.cos(x) * pyad.sin(y)
 ```
 
 **pyad** should be able to deal with either of these cases and end up with the same result, hence allowing the user to build functions of arbitrary complexity and not worry about having to change the implementation method.
@@ -118,7 +118,7 @@ The following is an example of how to use the pyad package to differentiate a us
 import pyad
 
 def simple_function(x, y):
-    return 2 * sin(x) + cos(y + 4)
+    return 2 * pyad.sin(x) + pyad.cos(y + 4)
 
 ad_forward.pyad.forwardmode(simple_function)
 ad_forward.initial_conditions({x:3,y:0.5})
