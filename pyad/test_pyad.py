@@ -1,7 +1,34 @@
-
 import numpy as np
+import math
 import pyad
 
+################################
+#       End to End Tests       #
+################################
+def test_case_base_trigonometric():
+    '''
+    Try some end to end testing using a complex trigonometric function of sin, cos and tan
+    '''
+    x = pyad.var('x', 1)
+    y = pyad.var('y', 0.5)
+    z = pyad.var('z', 2)
+    derivative_result = pyad.cos(x) + 3*(pyad.sin(y)**2) * pyad.cos(z) + pyad.tan(x)
+    
+    # Calculated from Wolfram Alpha
+    true_value = 1.8107574187515
+    true_x_deriv = 2.5840478360068
+    true_y_deriv = -1.0505264651220
+    true_z_deriv = -0.6270028955876
+
+    assert math.isclose(float(derivative_result.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(derivative_result.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(float(derivative_result.d.variables['y']), true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(float(derivative_result.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+
+
+################################
+#       Unit Tests       #
+################################
 def test_get_value_and_deriv_return_tensor():
     '''
     Get the value and derivative of a tensor
