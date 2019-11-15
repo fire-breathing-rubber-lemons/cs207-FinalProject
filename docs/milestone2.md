@@ -117,26 +117,23 @@ The core operating principle will be:
     * View the output trace table
 
 
-### Example Use Case
-
-The following is an example of how to use the pyad package to differentiate a user defined function using the forward mode. The specific code is yet to be implemented but the operating process will be as follows:
+### Demo
 
 ```python
 import pyad
 
-def simple_function(x, y):
-    return 2 * pyad.sin(x) + pyad.cos(y + 4)
+x = pyad.Variable('x', 1)
+y = pyad.Variable('y', 2)
+z = pyad.Variable('z', 3)
 
-ad_forward.pyad.forwardmode(simple_function)
-ad_forward.initial_conditions({x:3,y:0.5})
-ad_forward.derivative_seeds({x:1,y:1})
+>>> x**2 + 2*y + z
+Tensor(8, D(z=1, x=2, y=2))
 
-simple_derivative = ad_forward.compute_derivative(trace=True)
+def test_fun(x, y, z):
+	return pyad.exp(pyad.cos(x) + pyad.sin(y))**z
 
-# Options to get information out of the object after computation
-simple_derivative = ad.foward.get_derivative()
-trace_df = ad.foward.get_trace()
-initial_conditions = ad.foward.get_initial_conditions()
+>>> test_fun(x,y,z):
+Tensor(77.4, D(x=-195, y=-96.6, z=112))
 
 ```
 
