@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import pyad
+import forward_diff as pyad
 
 ################################
 #       End to End Tests       #
@@ -24,6 +24,89 @@ def test_case_base_trigonometric():
     assert math.isclose(float(derivative_result.d.variables['x']), true_x_deriv, rel_tol=1e-12)
     assert math.isclose(float(derivative_result.d.variables['y']), true_y_deriv, rel_tol=1e-12)
     assert math.isclose(float(derivative_result.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+
+def test_case_base_inversetrig():
+    '''
+    Testing inverse trig functions
+    '''
+    x = pyad.var('x', 0.25)
+    y = pyad.var('y', 0.5)
+    z = pyad.var('z', 3)
+    function = pyad.arcsin(x)**3 + pyad.arccos(y)**2 - z*pyad.arctan(z)
+
+    # Calculated using numpy
+    true_value = -2.634381651043423
+    true_x_deriv = 0.1978236588118186
+    true_y_deriv = -2.4183991523122903
+    true_z_deriv = -1.5490457723982545
+
+    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+
+
+
+def test_case_base_exp():
+    '''
+    Testing exponential function
+    '''
+    x = pyad.var('x', 2)
+    function = pyad.exp(x) + pyad.exp(-x)
+
+    # Calculated using numpy
+    true_value = 7.524391382167263
+    true_x_deriv = 7.253720815694038
+
+    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+
+
+def test_case_base_log():
+    '''
+    Testing logarithm function
+    '''
+    x = pyad.var('x', 3)
+    function = pyad.log(x)**2
+
+    # Calculated using numpy
+    true_value = 1.206948960812582
+    true_x_deriv = 0.7324081924454066
+
+    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+
+def test_case_base_root():
+    '''
+    Testing sqaure root and cubic root functions
+    '''
+    x = pyad.var('x', 4)
+    y = pyad.var('y', 8)
+    function = pyad.sqrt(x) + pyad.cbrt(y)
+
+    # Calculated using numpy
+    true_value = 4
+    true_x_deriv = 0.25
+    true_y_deriv = 0.01473139127471974
+
+    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
+
+
+def test_case_base_abs():
+    '''
+    Testing absolute value functin
+    '''
+    x = pyad.var('x', -2)
+    function = pyad.abs(x)
+
+    true_value = 2
+    true_x_deriv = -1
+
+    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+
 
 
 ################################
