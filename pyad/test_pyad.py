@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import forward_diff as pyad
+import pyad
 
 ################################
 #       End to End Tests       #
@@ -112,6 +112,8 @@ def test_case_base_abs():
 ################################
 #       Unit Tests       #
 ################################
+
+# Tests on the Tensor Class Object
 def test_get_value_and_deriv_return_tensor():
     '''
     Get the value and derivative of a tensor
@@ -124,6 +126,7 @@ def test_get_value_and_deriv_return_tensor():
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {}
 
+
 def test_get_value_and_deriv_return_constant():
     '''
     Get the value and derivative of a constant
@@ -135,6 +138,7 @@ def test_get_value_and_deriv_return_constant():
     assert output_tuple[0] == 1
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {}
+
 
 def test_get_value_and_deriv_return_Variable():
     '''
@@ -149,4 +153,72 @@ def test_get_value_and_deriv_return_Variable():
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {'x':1}
 
+
+def test_norm_tensor_single_value():
+    '''
+    Ensure the norm function correctly calculates euclidian norm
+    '''
+    test_tensor = pyad.Tensor(3)
+    norm_output = test_tensor.norm()
+
+    assert norm_output == 3.0
+
+
+def test_norm_tensor_single_vector():
+    '''
+    Ensure the norm function correctly calculates euclidian norm
+    '''
+    test_tensor = pyad.Tensor([2,2,1])
+    norm_output = test_tensor.norm()
+    
+    assert norm_output == 3.0
+
+
+def test_repr():
+    '''
+    Ensure repr correctly prints the Tensor class
+    '''
+    test_tensor = pyad.Tensor(3)
+    test_tensor2 = pyad.Tensor(3, d = pyad.MultivariateDerivative({'x':5}))
+
+    assert test_tensor.__repr__() == 'Tensor(3, D())'
+    assert test_tensor2.__repr__() == 'Tensor(3, D(x=5))'
+
+
+def test_neg():
+    '''
+    Ensure negating works on both value and derivatives
+    '''
+    test_tensor = pyad.Tensor(3, d = pyad.MultivariateDerivative({'x':5}))
+    neg_tensor = test_tensor.__neg__()
+
+    assert neg_tensor.value == -3
+    assert neg_tensor.d.variables == {'x':-5}
+
+
+
+
+# Tests on non-class functions
+def test_tensor_function():
+    '''
+    Check that the tensor wrapper around Tensor correctly returns a Tensor object
+    '''
+    test_tensor1 = pyad.tensor(5)
+
+    assert type(test_tensor1) == pyad.Tensor
+    assert test_tensor1.value == np.array(5)
+    assert type(test_tensor1.d) == pyad.MultivariateDerivative
+    assert test_tensor1.d.variables == {}
+
+
+def test_var_function():
+    '''
+    Check that the var wrapper around Variable correctly returns a Variable
+    '''
+    test_var1 = pyad.var('x', 5)
+
+    assert type(test_var1) == pyad.Variable
+    assert test_var1.value == np.array(5)
+    assert type(test_var1.d) == pyad.MultivariateDerivative
+    assert test_var1.d.variables == {'x':1}
 
