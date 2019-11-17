@@ -5,6 +5,7 @@ import pyad
 ################################
 #       End to End Tests       #
 ################################
+
 def test_case_base_trigonometric():
     '''
     Try some end to end testing using a complex trigonometric function of sin, cos and tan
@@ -24,6 +25,7 @@ def test_case_base_trigonometric():
     assert math.isclose(float(derivative_result.d.variables['x']), true_x_deriv, rel_tol=1e-12)
     assert math.isclose(float(derivative_result.d.variables['y']), true_y_deriv, rel_tol=1e-12)
     assert math.isclose(float(derivative_result.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+
 
 def test_case_base_inversetrig():
     '''
@@ -78,7 +80,7 @@ def test_case_base_log():
 
 def test_case_base_root():
     '''
-    Testing sqaure root and cubic root functions
+    Testing square root and cubic root functions
     '''
     x = pyad.var('x', 4)
     y = pyad.var('y', 8)
@@ -87,7 +89,11 @@ def test_case_base_root():
     # Calculated using numpy
     true_value = 4
     true_x_deriv = 0.25
-    true_y_deriv = 0.01473139127471974
+    true_y_deriv = 0.0833333333333333
+    
+    print(function.value)
+    print(function.d.variables['x'])
+    print(function.d.variables['y'])
 
     assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
     assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
@@ -154,7 +160,7 @@ def test_get_value_and_deriv_return_Variable():
     assert output_tuple[0] == np.array(2)
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {'x':1}
-
+  
 
 def test_norm_tensor_single_value():
     '''
@@ -292,4 +298,3 @@ def test_var_function():
     assert test_var1.value == np.array(5)
     assert type(test_var1.d) == pyad.MultivariateDerivative
     assert test_var1.d.variables == {'x':1}
-

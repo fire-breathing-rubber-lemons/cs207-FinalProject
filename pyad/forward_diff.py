@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class MultivariateDerivative:
     def __init__(self, variables=None):
         self.variables = variables or {}
@@ -155,7 +154,7 @@ def sqrt(tensor):
 
 
 def cbrt(tensor):
-    return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.pow(x, 2/3)))
+    return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.power(x, 2/3)))
 
 
 def power(base, exp):
