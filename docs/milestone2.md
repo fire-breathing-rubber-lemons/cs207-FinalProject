@@ -84,9 +84,7 @@ from pyad import forward_diff
 
 ### Interaction Theory
 
-In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as `MultivariateDerivative`. The user will create functions to be differentiated and initialize variables. There will not be a specific set of default inputs as each user may have a very different use case (differentiating a single variable or multi-variable function for instance).
-
-Simplicity for the user will be important. The idea is not to expose each stage of the AD process to the user but allow the user to very quickly get a result and then provide useful tools (methods) for the user to interrogate the results such as return a graph of the trace.
+In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as `Variable`, and occasionally `Tensor`. The user will create functions to be differentiated and initialize variables. There will not be a specific set of default inputs as each user may have a very different use case (differentiating a single variable or multi-variable function for instance).
 
 The user should be able to specify any differentiable function in the standard format, either a defined python function or a lambda function:
 ```python
@@ -116,9 +114,15 @@ Tensor(8, D(z=1, x=2, y=2))
 def test_fun(x, y, z):
 	return pyad.exp(pyad.cos(x) + pyad.sin(y))**z
 
->>> test_fun(x,y,z):
-Tensor(77.4, D(x=-195, y=-96.6, z=112))
-
+>>> result = test_fun(x,y,z)
+>>> result.value
+77.38548247505909
+>>> result.d['x']
+-195.35291444436658
+>>> result.d['y']
+-96.61117118001052
+>>> result.d['z']
+112.17797471022807
 ```
 
 
