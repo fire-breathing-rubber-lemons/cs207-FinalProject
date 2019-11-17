@@ -113,7 +113,9 @@ def test_case_base_abs():
 #       Unit Tests       #
 ################################
 
-# Tests on the Tensor Class Object
+
+#### Tests on the Tensor Class Object ####
+
 def test_get_value_and_deriv_return_tensor():
     '''
     Get the value and derivative of a tensor
@@ -196,9 +198,78 @@ def test_neg():
     assert neg_tensor.d.variables == {'x':-5}
 
 
+def test_add():
+    '''
+    Add two tensors together to get a new tensor
+    '''
+    test_tensor1 = pyad.Tensor(3, d = pyad.MultivariateDerivative({'x':5, 'y':10}))
+    test_tensor2 = pyad.Tensor(5, d = pyad.MultivariateDerivative({'x':3, 'y':30}))
+
+    new_tensor = test_tensor1 + test_tensor2
+
+    assert type(new_tensor) == pyad.Tensor
+    assert new_tensor.value == 8
+    assert new_tensor.d.variables == {'x':8, 'y':40}
 
 
-# Tests on non-class functions
+#### Tests on the MultivariateDerivative Class ####
+
+def test_repr_mvd():
+    '''
+    Ensure multivariatederivates print correctly
+    '''
+    mvd = pyad.MultivariateDerivative({'x':10})
+
+    assert mvd.__repr__() == 'D(x=10)'
+
+
+def test_copy_mvd():
+    '''
+    Ensure copy is a new MVD object
+    '''
+    mvd = pyad.MultivariateDerivative({'x':10})
+    mvd2 = mvd.copy()
+
+    assert mvd2.variables == {'x':10}
+    assert mvd2 != mvd
+
+
+def test_getitem_mvd():
+    '''
+    Ensure get item returns correctly
+    '''
+    mvd = pyad.MultivariateDerivative({'x':10, 'y':3, 'z':1})
+
+    assert mvd.__getitem__('x') == 10
+    assert mvd.__getitem__('y') == 3
+    assert mvd.__getitem__('z') == 1
+
+
+def test_add_mvd():
+    '''
+    Test the add method for the multivariatederivative object
+    '''
+    mvd1 = pyad.MultivariateDerivative({'x':10, 'y':3, 'z':1})
+    mvd2 = pyad.MultivariateDerivative({'x':10, 'y':3, 'a':1})
+
+    mvd3 = mvd1 + mvd2
+
+    assert mvd3.variables == {'x':20, 'y':6, 'z':1, 'a':1}
+
+
+def test_mul_mvd():
+    '''
+    Test the multiply method for the multivariatederivative object
+    '''
+    mvd1 = pyad.MultivariateDerivative({'x':10, 'y':3, 'z':1})
+
+    mvd2 = mvd1.mul(10)
+
+    assert mvd2.variables == {'x':100, 'y':30, 'z':10}
+
+    
+#### Tests on non-class functions ####
+
 def test_tensor_function():
     '''
     Check that the tensor wrapper around Tensor correctly returns a Tensor object
