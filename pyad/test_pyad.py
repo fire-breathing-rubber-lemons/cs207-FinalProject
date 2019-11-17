@@ -154,6 +154,3 @@ def test_get_value_and_deriv_return_Variable():
     assert output_tuple[0] == np.array(2)
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {'x':1}
-
-
-test_case_base_root()
