@@ -228,8 +228,8 @@ def _elementary_op(obj, fn, deriv_fn):
 
 def sin(tensor):
     '''
-    pyad sin - to calculate a Tensor (value and derivative) of the sin function
-        sin differentiates to cosine
+    pyad sin - to calculate a Tensor (value and derivative) of the sine function
+        sine differentiates to cosine
 
     Parameters
     ----------
@@ -246,8 +246,8 @@ def sin(tensor):
 
 def cos(tensor):
     '''
-    pyad cos - to calculate a Tensor (value and derivative) of the cos function
-        cosine differentiates to minus sin
+    pyad cos - to calculate a Tensor (value and derivative) of the cosine function
+        cosine differentiates to minus sine
 
     Parameters
     ----------
@@ -264,13 +264,13 @@ def cos(tensor):
 
 def tan(tensor):
     '''
-    pyad cos - to calculate a Tensor (value and derivative) of the tan function
-        tan differentiates to sec^2(x) (1/cos^2(x))
+    pyad tan - to calculate a Tensor (value and derivative) of the tangent function
+        The tangent of x differentiates to sec^2(x) (1/cos^2(x))
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the tan function is being differentiated at
+        The value of the variable or constant which the tangent function is being differentiated at
 
     Returns
     -------
@@ -281,39 +281,166 @@ def tan(tensor):
 
 
 def arcsin(tensor):
+    '''
+    pyad arcsin - to calculate a Tensor (value and derivative) of the arcsine function
+        The arcsine of x differentiates to 1/√(1-x^2)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the arcsine function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.arcsin, lambda x: 1 / np.sqrt(1 - x ** 2))
 
 
 def arccos(tensor):
+    '''
+    pyad arccos - to calculate a Tensor (value and derivative) of the arccosine function
+        The arccosine of x differentiates to -1/√(1-x^2)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the arccosine function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.arccos, lambda x: -1 / np.sqrt(1 - x ** 2))
 
 
 def arctan(tensor):
+    '''
+    pyad arctan - to calculate a Tensor (value and derivative) of the arctangent function
+        The arctangent of x differentiates to 1/(1+x^2)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the arctangent function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.arctan, lambda x: 1 / (1 + x ** 2))
 
 
 def abs(tensor):
+    '''
+    pyad abs - to calculate a Tensor (value and derivative) of the absolute value function
+        The absolute value differentiates to the sign of the argument (1 if x >=0, -1 if x<0)
+        Note: we have defined the derivative to be 1 when x is 0 for simplicity.
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the absolute value function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     # for simplicity, we just define D[abs(x)] == 1 when x == 0
     return _elementary_op(tensor, np.abs, lambda x: (2 * (x >= 0)) - 1)
 
 
 def exp(tensor):
+    '''
+    pyad exp - to calculate a Tensor (value and derivative) of the exponential function, e^x
+        e^x differentiates to e^x
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the exponential function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.exp, np.exp)
 
 
 def log(tensor):
+    '''
+    pyad log - to calculate a Tensor (value and derivative) of the natural logarithm function
+        The natural logarithm of x differentiates to 1/x
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the natural logarithm is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.log, lambda x: 1 / x)
 
 
 def sqrt(tensor):
+    '''
+    pyad sqrt - to calculate a Tensor (value and derivative) of the square root function
+        The square root of x differentiates to 1/(2√x)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the square root is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.sqrt, lambda x: 1 / (2 * np.sqrt(x)))
 
 
 def cbrt(tensor):
+    '''
+    pyad cbrt - to calculate a Tensor (value and derivative) of the cube root function
+        The cube root of x differentiates to 1/(3x^(2/3))
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the cube root is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.pow(x, 2/3)))
 
 
 def power(base, exp):
+    '''
+    pyad power - to calculate a Tensor (value and derivative) of the power function
+        The power function is differentiated using the power rule, d/dx(x^a) = ax^(a-1)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the power function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
     base_v, base_d = Tensor.get_value_and_deriv(base)
     exp_v, exp_d = Tensor.get_value_and_deriv(exp)
 
@@ -325,8 +452,14 @@ def power(base, exp):
 
 # wrappers around Tensor and Variable constructors
 def tensor(*args, **kwargs):
+    '''
+    tensor - a wrapper for the Tensor class constructor
+    '''
     return Tensor(*args, **kwargs)
 
 
 def var(*args, **kwargs):
+    '''
+    var - a wrapper for the Variable class constructor
+    '''
     return Variable(*args, **kwargs)
