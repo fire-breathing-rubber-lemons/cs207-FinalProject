@@ -1,5 +1,10 @@
 import numpy as np
 
+# we use this to get rid of disruptive runtime warnings
+runtime_warning_filter = np.testing.suppress_warnings()
+runtime_warning_filter.filter(RuntimeWarning)
+
+
 class MultivariateDerivative:
     def __init__(self, variables=None):
         self.variables = variables or {}
@@ -137,8 +142,8 @@ def arctan(tensor):
 
 
 def abs(tensor):
-    # for simplicity, we just define D[abs(x)] == 1 when x == 0
-    return _elementary_op(tensor, np.abs, lambda x: (2 * (x >= 0)) - 1)
+    # for simplicity, we just define D[abs(x)] == 0 when x == 0
+    return _elementary_op(tensor, np.abs, np.sign)
 
 
 def exp(tensor):
@@ -157,13 +162,14 @@ def cbrt(tensor):
     return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.power(x, 2/3)))
 
 
+@runtime_warning_filter
 def power(base, exp):
     base_v, base_d = Tensor.get_value_and_deriv(base)
     exp_v, exp_d = Tensor.get_value_and_deriv(exp)
 
     result = base_v ** exp_v
-    a = base_d.mul(np.nan_to_num(exp_v * base_v ** (exp_v - 1.0)))
-    b = exp_d.mul(result * np.nan_to_num(np.log(base_v)))
+    a = base_d.mul(exp_v * base_v ** (exp_v - 1.0))
+    b = exp_d.mul(result * np.log(base_v))
     return Tensor(result, a + b)
 
 
