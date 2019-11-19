@@ -423,7 +423,7 @@ def cbrt(tensor):
     Tensor: class
         Calls the _elementary_op function and returns the resulting Tensor
     '''
-    return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.pow(x, 2/3)))
+    return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.power(x, 2/3)))
 
 
 def power(base, exp):
