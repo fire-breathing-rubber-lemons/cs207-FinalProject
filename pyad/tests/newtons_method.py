@@ -16,9 +16,8 @@ def newtons_method(f, init, max_iters=1000):
 
 
 def my_func(x):
-    # TODO: fix all the invalid value in log and divide by zero warnings!
     return (x - 12345678910) ** 2
 
 
 if __name__ == '__main__':
-    print(newtons_method(my_func, 100, 100))
+    print(newtons_method(my_func, 100))
