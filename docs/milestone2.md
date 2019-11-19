@@ -165,17 +165,10 @@ We will use [`setuptools`](https://packaging.python.org/tutorials/packaging-proj
 
 ### Current Implementation
 
-#### Core Data Structures: 
-- tensor
-- dictionary
-- vector(to be implemented)
-	- A row vector of length n: `pyad.vector(n, 0)`
-	- A column vector of length n: `pyad.vector(n, 1)`
-
-#### Core Classes
+#### Core Data Structures
 - `MultivariateDerivative`: a class to hold derivative information.
 - `Tensor`: a class that takes in variable values, and compute and store the derivatives.
-- `Variables`: a sub-class of `Tensor` that assigns variable values and initializes their derivatives to be 1. 
+- `Variable`: a sub-class of `Tensor` that assigns variable values and initializes their derivatives to be 1. 
 
 #### Important attributes
 - Input variable names, such as x,y,z
