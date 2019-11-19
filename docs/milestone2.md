@@ -67,8 +67,6 @@ This method of automatic differentiation (which is referred to as __forward mode
  
 ## How to use `pyad`
 
-## TODO
-
 ### Set up
 
 **pyad** will be self contained on Github and should be installable using pip and the github ssh address, or through the more formal approaches laid out in the next section.
@@ -83,14 +81,12 @@ import pyad
 
 Specific classes or functions can be called  individual and will operate independently, for example:
 ```python
-from pyad import forwardmode
+from pyad import forward_diff
 ```
 
 ### Interaction Theory
 
-In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as `forwardmode`. The user will create a blank instance of the differentiator object which will then persist. By design this will be a blank slate and there will not be a specific set of default inputs as each user may have a very different use case (differentiating a single variable or multi-variable function for instance).
-
-Simplicity for the user will be important. The idea is not to expose each stage of the AD process to the user but allow the user to very quickly get a result and then provide useful tools (methods) for the user to interrogate the results such as return a graph of the trace.
+In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as `Variable`, and occasionally `Tensor`. The user will create functions to be differentiated and initialize variables. There will not be a specific set of default inputs as each user may have a very different use case (differentiating a single variable or multi-variable function for instance).
 
 The user should be able to specify any differentiable function in the standard format, either a defined python function or a lambda function:
 ```python
@@ -105,41 +101,30 @@ lambda x, y: pyad.cos(x) * pyad.sin(y)
 
 **pyad** should be able to deal with either of these cases and end up with the same result, hence allowing the user to build functions of arbitrary complexity and not worry about having to change the implementation method.
 
-The core operating principle will be:
-
-1. Define a function to be differentiated (or alternatively use a lambda function inline) `def: test_function(x) return 2 * x` or `lambda x: 2 * x`
-2. Instantiate a specific class of Automatic Differentiation from the **pyad** package (for instance `my_ad = pyad.forwardmode(test_function)` or `my_ad = pyad.forwardmode(lambda x: 2 * x)` 
-3. Set up parameters with which to differentiate - this will need to be the seed of each of the variables and the initial derivative conditions (usually 1). `my_ad.initial_conditions(2.5), my_ad.derivative_seeds(1)` or `my_ad.initial_conditions({x:2.5, y:5.8}), my_ad.derivative_seeds({x:1, y:1)`
-4. Compute the derivative - this should be an explicit step as the computational time may be non-negligible. `my_ad.compute_derivative()` - this computation could have a number of options
-    * Allow the user control of whether or not to keep the full trace table for inspection (a must for reverse mode).
-    * Utilise dual number implementation.
-5. There should be a number of methods for interrogating the result once this is completed, these could include:
-    * Get the output value for the derivative
-    * View the initial conditions
-    * View the output trace table
-
-
-### Example Use Case
-
-The following is an example of how to use the pyad package to differentiate a user defined function using the forward mode. The specific code is yet to be implemented but the operating process will be as follows:
+### Demo
 
 ```python
 import pyad
 
-def simple_function(x, y):
-    return 2 * pyad.sin(x) + pyad.cos(y + 4)
+x = pyad.Variable('x', 1)
+y = pyad.Variable('y', 2)
+z = pyad.Variable('z', 3)
 
-ad_forward.pyad.forwardmode(simple_function)
-ad_forward.initial_conditions({x:3,y:0.5})
-ad_forward.derivative_seeds({x:1,y:1})
+>>> x**2 + 2*y + z
+Tensor(8, D(z=1, x=2, y=2))
 
-simple_derivative = ad_forward.compute_derivative(trace=True)
+def test_fun(x, y, z):
+	return pyad.exp(pyad.cos(x) + pyad.sin(y))**z
 
-# Options to get information out of the object after computation
-simple_derivative = ad.foward.get_derivative()
-trace_df = ad.foward.get_trace()
-initial_conditions = ad.foward.get_initial_conditions()
-
+>>> result = test_fun(x,y,z)
+>>> result.value
+77.38548247505909
+>>> result.d['x']
+-195.35291444436658
+>>> result.d['y']
+-96.61117118001052
+>>> result.d['z']
+112.17797471022807
 ```
 
 
@@ -178,77 +163,33 @@ We will use [`setuptools`](https://packaging.python.org/tutorials/packaging-proj
 
 ## Implementation details
 
-## TODO
+### Current Implementation
 
-### Data Structures
-- scalar(integers or floats)
-- dictionary(can be used to initialze/assign variables)
-	
-	e.g. we can initiate input values by calling: `initial_condition({x:1, y:2})`
-- vector
+#### Core Data Structures: 
+- tensor
+- dictionary
+- vector(to be implemented)
 	- A row vector of length n: `pyad.vector(n, 0)`
 	- A column vector of length n: `pyad.vector(n, 1)`
-- matrix
-    
-    e.g. `pyad.matrix(m,n)` creates an mxn matrix
-- numpy array
 
-	The package could make use of numpy arrays, but our build-in vectors and matrices make it easier for the users to recognize the sizes.
-- tree(store the trace for easier access and visualization)
+#### Core Classes
+- `MultivariateDerivative`: a class to hold derivative information.
+- `Tensor`: a class that takes in variable values, and compute and store the derivatives.
+- `Variables`: a sub-class of `Tensor` that assigns variable values and initializes their derivatives to be 1. 
 
-### Classes
-We'll implement `forwardmode` class, which performs the forward pass of Automatic Differentiation; and `node` class, which stores the function and derivative values in a tree diagram. 
+#### Important attributes
+- Input variable names, such as x,y,z
+- Variable values and derivative values
 
-Demo:
+#### External dependency
+`numpy` for elementary functions
 
-```python
+#### Elementray functions
+Add, Subtract, Multiply, Power, Trig functions, Inverse trig functions, Exponential function, Log function, Square root function, Cubic root function.
 
-class forwardmode():
-	'''Forward pass of AD'''
-
-	def __init__(self, f):
-		'''f = function to be differentiated'''
-
-	def initial_conditions(*args):
-		'''assign input vals'''		
-
-	def derivative_seeds(*args):
-		'''seed in derivative values df/dx_i, default is 1'''
-
-	def compute_derivatives(self, f, n, trace=True):
-		'''
-		compute the nth derivative of f
-		f = function to be differentiated
-		n = nth derivative
-		trace = boolean-whether to store the value, default is True
-		'''
-
-	def get_initial_conditions(self):
-
-	def get_derivative(self):
-
-	def get_trace(self):
-
-
-class node():
-	'''Store current function values and derivative values'''
-	def __init__(self, val, parent):
-		'''store values in its parent node'''
-
-	def initilize_root(self, *args):
-
-	def add_node(self, parent, *args):
-
-```
-
-### External Dependency
-
-- `numpy` for elementary functions
-- `pandas` for displaying the evaluation table
-- `plotly` and `Graphviz` to visualize the computational graph
-
-### Elementary Functions
-We will deal with elementary functions using `numpy`. But we'll wrap `numpy` functions with `pyad` and overwrite some of the functions potentially. 
-
-For example, user will call `pyad.sin(x)` .
+#### To be implemented
+- Variables with vector/matrix format
+- Matrix operators, such as dot product
+- Modify the current implementation to support vector functions of vectors and scalar functions of vectors
+- Maybe: A visualization tool to show the workflow
 
