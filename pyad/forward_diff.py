@@ -6,48 +6,48 @@ runtime_warning_filter.filter(RuntimeWarning)
 
 
 class MultivariateDerivative:
-    '''
+    """
     Multivariate Derivative is a class called automatically by the Variable
-    or Tensor classes to hold derivative information. 
+    or Tensor classes to hold derivative information.
 
     Parameters
     ----------
     variables : dict
         Store the name and value of the derivative object allowing for multiple variable keys
-    
+
     Attributes
     ----------
     variables : dict
         Internal storage of the named derivative values in dictionary format
-    '''
+    """
     def __init__(self, variables=None):
         self.variables = variables or {}
 
     def __repr__(self):
-        '''
+        """
         Create a descriptive object for printing, D noting that the object is a derivative
 
         Returns
         -------
         str
             a string representing the value of the derivative of the MultivariateDerivative object
-        '''
+        """
         values = ', '.join(f'{k}={v:.3g}' for k, v in self.variables.items())
         return f'D({values})'
 
     def copy(self):
-        '''
+        """
         Given an existing MultivariateDerivative object (self) create a new one as a copy
 
         Returns
         -------
         MultivariateDerivative
             a new MultivariateDerivative object
-        '''
+        """
         return MultivariateDerivative(self.variables.copy())
 
     def __getitem__(self, key):
-        '''
+        """
         Access the derivative of one of the variables in the object, print(MultivariateDerivative)
         will reveal the existing keys within the instance.
 
@@ -55,11 +55,21 @@ class MultivariateDerivative:
         -------
         dict value
             Value of the dictionary of derivatives at the specified key
-        '''
+        """
         return self.variables[key]
 
     # the only way to combine derivatives is with addition or multiplication
     def __add__(self, other):
+        """
+        Adds this and another MultivariateDerivative object together and produces
+        a new MultivariateDerivative object whose variable set is the union
+        of the two individuals.
+
+        Returns
+        -------
+        MultivariateDerivative
+            a new MultivariateDerivative object
+        """
         all_variables = set(self.variables.keys()) | set(other.variables.keys())
         result = {}
         for v in all_variables:
@@ -67,6 +77,16 @@ class MultivariateDerivative:
         return MultivariateDerivative(result)
 
     def mul(self, multiplier):
+        """
+        Multiplies all of the values in this MultivariateDerivative by a
+        scalar (i.e. non-Tensor and non-MultivariateDerivative) object and
+        return a new MultivariateDerivative.
+
+        Returns
+        -------
+        MultivariateDerivative
+            a new MultivariateDerivative object
+        """
         result = {}
         for k, v in self.variables.items():
             result[k] = multiplier * v
@@ -74,8 +94,8 @@ class MultivariateDerivative:
 
 
 class Tensor:
-    '''
-    Tensor (constant value) is the base class of the Variable and can be used to represent 
+    """
+    Tensor (constant value) is the base class of the Variable and can be used to represent
     constant values where the derivative is not required for automatic computation during
     automatic differentiation. Derivative by default is set to an empty dictionary.
 
@@ -87,7 +107,7 @@ class Tensor:
     d : MultivariateDerivative
         Store the value of the derivative (default is an empty MultivariateDerivative)
         but can be manually set to a specific value
-    
+
     Attributes
     ----------
     value : np.array
@@ -95,7 +115,7 @@ class Tensor:
 
     d : MultivariateDerivative
         Internal storage of the tensor derivative
-    '''
+    """
     def __init__(self, value, d=None):
         # If existing Tensor check for whether a derivative value was set
         if isinstance(value, Tensor):
@@ -164,7 +184,7 @@ class Tensor:
 
 
 class Variable(Tensor):
-    '''
+    """
     Variable (a variable value for the purposes of differentiation). A variable is used to
     represent any value which the user wishes to include in the partial derivative outputs
     and is built on top of the Tensor base class.
@@ -182,7 +202,7 @@ class Variable(Tensor):
     d : MultivariateDerivative
         Store the value of the derivative, default is an array of 1's (unit vectors) which
         will result in the computation of the Jacobian
-    
+
     Attributes
     ----------
     name: str
@@ -193,7 +213,7 @@ class Variable(Tensor):
 
     d : MultivariateDerivative
         Internal storage of the variable derivative
-    '''
+    """
     def __init__(self, name, value):
         self.name = name
         self.value = np.array(value)
@@ -204,8 +224,8 @@ class Variable(Tensor):
 
 # Elementary operations of a single variable. They all use chain rule.
 def _elementary_op(obj, fn, deriv_fn):
-    '''
-    A generic framework to allow for the chain rule of other elementary functions 
+    """
+    A generic framework to allow for the chain rule of other elementary functions
     taken from the numpy module.
 
     Parameters
@@ -225,14 +245,14 @@ def _elementary_op(obj, fn, deriv_fn):
     Tensor: class
         Tensor object which contains the resulting value and result from the
         chain rule (new derivative)
-    '''
+    """
     v, d = Tensor.get_value_and_deriv(obj)
     chain_rule = d.mul(deriv_fn(v))
     return Tensor(fn(v), chain_rule)
 
 
 def sin(tensor):
-    '''
+    """
     pyad sin - to calculate a Tensor (value and derivative) of the sine function
         sine differentiates to cosine
 
@@ -244,13 +264,13 @@ def sin(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.sin, np.cos)
 
 
 def cos(tensor):
-    '''
+    """
     pyad cos - to calculate a Tensor (value and derivative) of the cosine function
         cosine differentiates to minus sine
 
@@ -262,13 +282,13 @@ def cos(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.cos, lambda x: -np.sin(x))
 
 
 def tan(tensor):
-    '''
+    """
     pyad tan - to calculate a Tensor (value and derivative) of the tangent function
         The tangent of x differentiates to sec^2(x) (1/cos^2(x))
 
@@ -280,13 +300,13 @@ def tan(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.tan, lambda x: 1 / (np.cos(x) ** 2))
 
 
 def arcsin(tensor):
-    '''
+    """
     pyad arcsin - to calculate a Tensor (value and derivative) of the arcsine function
         The arcsine of x differentiates to 1/√(1-x^2)
 
@@ -298,13 +318,13 @@ def arcsin(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.arcsin, lambda x: 1 / np.sqrt(1 - x ** 2))
 
 
 def arccos(tensor):
-    '''
+    """
     pyad arccos - to calculate a Tensor (value and derivative) of the arccosine function
         The arccosine of x differentiates to -1/√(1-x^2)
 
@@ -316,13 +336,13 @@ def arccos(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.arccos, lambda x: -1 / np.sqrt(1 - x ** 2))
 
 
 def arctan(tensor):
-    '''
+    """
     pyad arctan - to calculate a Tensor (value and derivative) of the arctangent function
         The arctangent of x differentiates to 1/(1+x^2)
 
@@ -334,16 +354,19 @@ def arctan(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.arctan, lambda x: 1 / (1 + x ** 2))
 
 
 def abs(tensor):
-    '''
+    """
     pyad abs - to calculate a Tensor (value and derivative) of the absolute value function
-        The absolute value differentiates to the sign of the argument (1 if x >=0, -1 if x<0)
-        Note: we have defined the derivative to be 1 when x is 0 for simplicity.
+        For simplicity, we have defined the absolute value derviative to be the
+        sign of the argument:
+            if x > 0:  return 1
+            if x == 0: return 0
+            if x < 0:  return -1
 
     Parameters
     ----------
@@ -353,14 +376,13 @@ def abs(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.abs, np.sign)
 
 
-
 def exp(tensor):
-    '''
+    """
     pyad exp - to calculate a Tensor (value and derivative) of the exponential function, e^x
         e^x differentiates to e^x
 
@@ -372,13 +394,13 @@ def exp(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.exp, np.exp)
 
 
 def log(tensor):
-    '''
+    """
     pyad log - to calculate a Tensor (value and derivative) of the natural logarithm function
         The natural logarithm of x differentiates to 1/x
 
@@ -390,13 +412,13 @@ def log(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.log, lambda x: 1 / x)
 
 
 def sqrt(tensor):
-    '''
+    """
     pyad sqrt - to calculate a Tensor (value and derivative) of the square root function
         The square root of x differentiates to 1/(2√x)
 
@@ -408,13 +430,13 @@ def sqrt(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.sqrt, lambda x: 1 / (2 * np.sqrt(x)))
 
 
 def cbrt(tensor):
-    '''
+    """
     pyad cbrt - to calculate a Tensor (value and derivative) of the cube root function
         The cube root of x differentiates to 1/(3x^(2/3))
 
@@ -426,14 +448,14 @@ def cbrt(tensor):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     return _elementary_op(tensor, np.cbrt, lambda x: 1 / (3 * np.power(x, 2/3)))
 
 
 @runtime_warning_filter
 def power(base, exp):
-    '''
+    """
     pyad power - to calculate a Tensor (value and derivative) of the power function
         The power function is differentiated using the power rule, d/dx(x^a) = ax^(a-1)
 
@@ -445,8 +467,8 @@ def power(base, exp):
     Returns
     -------
     Tensor: class
-        Calls the _elementary_op function and returns the resulting Tensor
-    '''
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
     base_v, base_d = Tensor.get_value_and_deriv(base)
     exp_v, exp_d = Tensor.get_value_and_deriv(exp)
 
@@ -458,14 +480,14 @@ def power(base, exp):
 
 # wrappers around Tensor and Variable constructors
 def tensor(*args, **kwargs):
-    '''
+    """
     tensor - a wrapper for the Tensor class constructor
-    '''
+    """
     return Tensor(*args, **kwargs)
 
 
 def var(*args, **kwargs):
-    '''
+    """
     var - a wrapper for the Variable class constructor
-    '''
+    """
     return Variable(*args, **kwargs)

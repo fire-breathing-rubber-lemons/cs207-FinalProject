@@ -4,6 +4,7 @@ python:
 before_install:
     - pip install pytest pytest-cov
     - pip install codecov
+    - python setup.py install
 script:
     - pytest --cov=./
 after_success:
