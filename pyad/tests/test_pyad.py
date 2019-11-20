@@ -13,7 +13,7 @@ def test_case_base_trigonometric():
     x = pyad.var('x', 1)
     y = pyad.var('y', 0.5)
     z = pyad.var('z', 2)
-    derivative_result = pyad.cos(x) + 3*(pyad.sin(y)**2) * pyad.cos(z) + pyad.tan(x)
+    function = pyad.cos(x) + 3*(pyad.sin(y)**2) * pyad.cos(z) + pyad.tan(x)
 
     # Calculated from Wolfram Alpha
     true_value = 1.8107574187515
@@ -21,10 +21,10 @@ def test_case_base_trigonometric():
     true_y_deriv = -1.0505264651220
     true_z_deriv = -0.6270028955876
 
-    assert math.isclose(float(derivative_result.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(derivative_result.d['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(derivative_result.d['y']), true_y_deriv, rel_tol=1e-12)
-    assert math.isclose(float(derivative_result.d['z']), true_z_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['z'], true_z_deriv, rel_tol=1e-12)
 
 
 def test_case_base_inversetrig():
@@ -42,10 +42,31 @@ def test_case_base_inversetrig():
     true_y_deriv = -2.4183991523122903
     true_z_deriv = -1.5490457723982545
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d['y']), true_y_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d['z']), true_z_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['z'], true_z_deriv, rel_tol=1e-12)
+
+
+def test_case_base_hyperbolic():
+    '''
+    Testing hyperbolic functions
+    '''
+    x = pyad.var('x', 0.5)
+    y = pyad.var('y', 1)
+    z = pyad.var('z', 3)
+    function = 2*pyad.sinh(x)*x + 3*pyad.cosh(y) + pyad.tanh(z)
+
+    # Calculated using numpy
+    true_value = 6.145391963626209
+    true_x_deriv = 2.1698165761938757
+    true_y_deriv = 3.525603580931404
+    true_z_deriv = 0.009866037165440192
+
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['z'], true_z_deriv, rel_tol=1e-12)
 
 
 def test_case_base_exp():
@@ -59,8 +80,8 @@ def test_case_base_exp():
     true_value = 7.524391382167263
     true_x_deriv = 7.253720815694038
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
 
 def test_case_base_log():
@@ -74,8 +95,8 @@ def test_case_base_log():
     true_value = 1.206948960812582
     true_x_deriv = 0.7324081924454066
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
 
 def test_case_base_root():
@@ -95,9 +116,9 @@ def test_case_base_root():
     print(function.d['x'])
     print(function.d['y'])
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d['y']), true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
 
 
 def test_case_base_abs():
@@ -110,8 +131,8 @@ def test_case_base_abs():
     true_value = 2
     true_x_deriv = -1
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
 
 ##########################
