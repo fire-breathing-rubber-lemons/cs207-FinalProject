@@ -1,4 +1,4 @@
-# `pyad`: CS207 Final Project Milestone 1
+# `pyad`: CS207 Final Project Milestone 2
 
 
 ## Introduction
@@ -219,6 +219,6 @@ The reverse mode however will require a slightly different method of implementat
 1. Forward pass of reverse mode - evaluates the function values and partial derivatives at each node.
 2. Backward pass - calculate the chain rule backwards from the output.
 
-This will require us to modify the way values and derivaties are stored within the Variable and Tensor classes as there is now a requirement to store information throughout the tree during the forward pass and utilized this on the backward pass.
+This will require us to modify the way values and derivaties are stored within the Variable and Tensor classes as there is now a requirement to store information throughout the tree during the forward pass and utilize this on the backward pass.
 
-Where possible we can reuse or edit classes from the forward mode implementation - possible combining into a single automatic_differentiation.py and then having subclasses of the Variable or Tensor objects for forward and reverse mode which would store different value and allow for the implementation of both modes within the pyad package.
+Where possible we can reuse or edit classes from the forward mode implementation - possibly combining into a single automatic_differentiation.py and then having subclasses of the Variable or Tensor objects for forward and reverse mode which would store different value and allow for the implementation of both modes within the pyad package.
