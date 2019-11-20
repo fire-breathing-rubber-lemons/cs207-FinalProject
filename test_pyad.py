@@ -47,7 +47,25 @@ def test_case_base_inversetrig():
     assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
     assert math.isclose(float(function.d.variables['z']), true_z_deriv, rel_tol=1e-12)
 
+def test_case_base_hyperbolic():
+    '''
+    Testing hyperbolic functions
+    '''
+    x = pyad.var('x', 0.5)
+    y = pyad.var('y', 1)
+    z = pyad.var('z', 3)
+    function = 2*pyad.sinh(x)*x + 3*pyad.cosh(y) + pyad.tanh(z)
 
+    # Calculated using numpy
+    true_value = 6.145391963626209
+    true_x_deriv = 2.1698165761938757
+    true_y_deriv = 3.525603580931404
+    true_z_deriv = 0.009866037165440192
+
+    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(float(function.d.variables['z']), true_z_deriv, rel_tol=1e-12)
 
 def test_case_base_exp():
     '''

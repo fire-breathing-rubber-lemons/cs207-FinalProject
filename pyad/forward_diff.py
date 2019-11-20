@@ -338,6 +338,56 @@ def arctan(tensor):
     '''
     return _elementary_op(tensor, np.arctan, lambda x: 1 / (1 + x ** 2))
 
+def sinh(tensor):
+    '''
+    pyad sinh - to calculate a Tensor (value and derivative) of the hyperbolic sine function
+        The sinh of x differentiates to cosh(x)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the sinh function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
+    return _elementary_op(tensor, np.sinh, np.cosh)
+
+def cosh(tensor):
+    '''
+    pyad cosh - to calculate a Tensor (value and derivative) of the hyperbolic cosine function
+        The cosh of x differentiates to sinh(x)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the cosh function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
+    return _elementary_op(tensor, np.cosh, np.sinh)
+
+def tanh(tensor):
+    '''
+    pyad tanh - to calculate a Tensor (value and derivative) of the hyperbolic tangent function
+        The tanh of x differentiates to 1/cosh^2(x)
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the cosh function is being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Calls the _elementary_op function and returns the resulting Tensor
+    '''
+    return _elementary_op(tensor, np.tanh, lambda x: 1/(np.cosh(x)**2))
 
 def abs(tensor):
     '''
