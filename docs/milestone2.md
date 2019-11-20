@@ -186,3 +186,39 @@ Add, Subtract, Multiply, Power, Trig functions, Inverse trig functions, Exponent
 - Modify the current implementation to support vector functions of vectors and scalar functions of vectors
 - Maybe: A visualization tool to show the workflow
 
+
+## Future Features
+
+Looking at applications of automatic differentiation, the one which stands out most prominently is back propagation for Neural Networks, having also been covered within the Harvard course, Introduction to Data Science. 
+
+<img src=nn_design.png width="700">
+
+Reference: AC209 - Introduction to Data Science, Harvard
+
+Back propagation is used in machine learning to efficiently calculate the weights within a Neural Network. It utilzes a form of gradient descent to update the weights based on the derivative of the Loss function.
+
+This is where automatic differentiation comes into play (specifically the reverse mode). Evaluating the neural network at some random starting point will produce a first calculation of Loss as a numeric value. What is then required is to work backwards from the output layer, calculating the derivative of the Loss function with respect to each neuron in the node and then update the weight based on this numeric value of the derivative and the learning rate specified.
+
+For a given weight within the node the update process is:
+
+<img src=backprop_update.png width="300">
+
+For our future feature we'd like to implement the reverse mode of automatic differentiation, in order to make it a seamless process to generate a trained neural network from a given loss function.
+
+#### Backward Mode
+
+The reason for implementing the reverse mode of automatic differentiation is that it is much more efficient for when the number of features (variables to differentiate with respect too) exceeds the number of elementary functions. In the case of a neural network there will commonly be tens if not hundreds of nodes each of which have interconnecting weights creating hundreds if not thousands of weights which needs to be updated. Neural networks therefore present the perfect scenario to implement and test the reverse mode of automatic differentiation through back propagation.
+
+
+#### Implementation
+
+The current software implementation is designed to allow for expansion to other forms of automatic differentiation. The existing forward mode implementation is contained within the forward_mode.py file which has the Variable, Tensor and Multivariate Derivative classes required to set up and execute the forward mode. To implement the reverse mode we will add in a second file - reverse_mode.py which will include the required functions.
+
+The reverse mode however will require a slightly different method of implementation:
+
+1. Forward pass of reverse mode - evaluates the function values and partial derivatives at each node.
+2. Backward pass - calculate the chain rule backwards from the output.
+
+This will require us to modify the way values and derivaties are stored within the Variable and Tensor classes as there is now a requirement to store information throughout the tree during the forward pass and utilized this on the backward pass.
+
+Where possible we can reuse or edit classes from the forward mode implementation - possible combining into a single automatic_differentiation.py and then having subclasses of the Variable or Tensor objects for forward and reverse mode which would store different value and allow for the implementation of both modes within the pyad package.
