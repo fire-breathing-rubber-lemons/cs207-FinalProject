@@ -13,18 +13,18 @@ def test_case_base_trigonometric():
     x = pyad.var('x', 1)
     y = pyad.var('y', 0.5)
     z = pyad.var('z', 2)
-    derivative_result = pyad.cos(x) + 3*(pyad.sin(y)**2) * pyad.cos(z) + pyad.tan(x)
-    
+    function = pyad.cos(x) + 3*(pyad.sin(y)**2) * pyad.cos(z) + pyad.tan(x)
+
     # Calculated from Wolfram Alpha
     true_value = 1.8107574187515
     true_x_deriv = 2.5840478360068
     true_y_deriv = -1.0505264651220
     true_z_deriv = -0.6270028955876
 
-    assert math.isclose(float(derivative_result.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(derivative_result.d.variables['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(derivative_result.d.variables['y']), true_y_deriv, rel_tol=1e-12)
-    assert math.isclose(float(derivative_result.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['z'], true_z_deriv, rel_tol=1e-12)
 
 
 def test_case_base_inversetrig():
@@ -42,10 +42,11 @@ def test_case_base_inversetrig():
     true_y_deriv = -2.4183991523122903
     true_z_deriv = -1.5490457723982545
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['z'], true_z_deriv, rel_tol=1e-12)
+
 
 def test_case_base_hyperbolic():
     '''
@@ -62,10 +63,11 @@ def test_case_base_hyperbolic():
     true_y_deriv = 3.525603580931404
     true_z_deriv = 0.009866037165440192
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['z']), true_z_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['z'], true_z_deriv, rel_tol=1e-12)
+
 
 def test_case_base_exp():
     '''
@@ -78,8 +80,8 @@ def test_case_base_exp():
     true_value = 7.524391382167263
     true_x_deriv = 7.253720815694038
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
 
 def test_case_base_log():
@@ -93,8 +95,9 @@ def test_case_base_log():
     true_value = 1.206948960812582
     true_x_deriv = 0.7324081924454066
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+
 
 def test_case_base_root():
     '''
@@ -108,14 +111,14 @@ def test_case_base_root():
     true_value = 4
     true_x_deriv = 0.25
     true_y_deriv = 0.0833333333333333
-    
-    print(function.value)
-    print(function.d.variables['x'])
-    print(function.d.variables['y'])
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['y']), true_y_deriv, rel_tol=1e-12)
+    print(function.value)
+    print(function.d['x'])
+    print(function.d['y'])
+
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.d['y'], true_y_deriv, rel_tol=1e-12)
 
 
 def test_case_base_abs():
@@ -128,14 +131,13 @@ def test_case_base_abs():
     true_value = 2
     true_x_deriv = -1
 
-    assert math.isclose(float(function.value), true_value, rel_tol=1e-12)
-    assert math.isclose(float(function.d.variables['x']), true_x_deriv, rel_tol=1e-12)
+    assert math.isclose(function.value, true_value, rel_tol=1e-12)
+    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
 
-
-################################
+##########################
 #       Unit Tests       #
-################################
+##########################
 
 
 #### Tests on the Tensor Class Object ####
@@ -160,7 +162,7 @@ def test_get_value_and_deriv_return_constant():
     test_tensor = pyad.Tensor(5)
     output_tuple = test_tensor.get_value_and_deriv(1)
 
-    assert type(output_tuple) == tuple 
+    assert type(output_tuple) == tuple
     assert output_tuple[0] == 1
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {}
@@ -178,7 +180,7 @@ def test_get_value_and_deriv_return_Variable():
     assert output_tuple[0] == np.array(2)
     assert type(output_tuple[1]) == pyad.MultivariateDerivative
     assert output_tuple[1].variables == {'x':1}
-  
+
 
 def test_norm_tensor_single_value():
     '''
@@ -196,7 +198,7 @@ def test_norm_tensor_single_vector():
     '''
     test_tensor = pyad.Tensor([2,2,1])
     norm_output = test_tensor.norm()
-    
+
     assert norm_output == 3.0
 
 
@@ -205,7 +207,7 @@ def test_repr():
     Ensure repr correctly prints the Tensor class
     '''
     test_tensor = pyad.Tensor(3)
-    test_tensor2 = pyad.Tensor(3, d = pyad.MultivariateDerivative({'x':5}))
+    test_tensor2 = pyad.Tensor(3, d=pyad.MultivariateDerivative({'x':5}))
 
     assert test_tensor.__repr__() == 'Tensor(3, D())'
     assert test_tensor2.__repr__() == 'Tensor(3, D(x=5))'
@@ -215,7 +217,7 @@ def test_neg():
     '''
     Ensure negating works on both value and derivatives
     '''
-    test_tensor = pyad.Tensor(3, d = pyad.MultivariateDerivative({'x':5}))
+    test_tensor = pyad.Tensor(3, d=pyad.MultivariateDerivative({'x':5}))
     neg_tensor = test_tensor.__neg__()
 
     assert neg_tensor.value == -3
@@ -226,8 +228,8 @@ def test_add():
     '''
     Add two tensors together to get a new tensor
     '''
-    test_tensor1 = pyad.Tensor(3, d = pyad.MultivariateDerivative({'x':5, 'y':10}))
-    test_tensor2 = pyad.Tensor(5, d = pyad.MultivariateDerivative({'x':3, 'y':30}))
+    test_tensor1 = pyad.Tensor(3, d=pyad.MultivariateDerivative({'x':5, 'y':10}))
+    test_tensor2 = pyad.Tensor(5, d=pyad.MultivariateDerivative({'x':3, 'y':30}))
 
     new_tensor = test_tensor1 + test_tensor2
 
@@ -291,7 +293,7 @@ def test_mul_mvd():
 
     assert mvd2.variables == {'x':100, 'y':30, 'z':10}
 
-    
+
 #### Tests on non-class functions ####
 
 def test_tensor_function():

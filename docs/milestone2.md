@@ -5,16 +5,16 @@
 
 Derivatives and derivative arrays (Jacobians, Hessians, etc.) are ubiquitous in science and engineering. Example applications of derivatives include:
 
-- __Data science:__ optimizing the parameters of a predictive model 
+- __Data science:__ optimizing the parameters of a predictive model
 - __Electrical engineering:__ simulating circuits with semiconductor elements
-- __Climatology:__ modeling changes in atmospheric conditions while assimilating data from sensors around the world 
+- __Climatology:__ modeling changes in atmospheric conditions while assimilating data from sensors around the world
 - __Finance:__ calculating the price of financial instruments
 
 In these cases (and many others involving simulation or optimization), it's necessary to compute derivatives and preferably not by hand.
 
 So, how can derivatives be implemented in computer software?
 
-One way is to create a numerical approximation (typically  using finite difference methods), however, this approach is prone to truncation error and is accurate only to a limited number of significant digits. 
+One way is to create a numerical approximation (typically  using finite difference methods), however, this approach is prone to truncation error and is accurate only to a limited number of significant digits.
 
 Another way is to use a computer algebra system to symbolically compute the derivative, however, this has a high computational cost.
 
@@ -37,11 +37,11 @@ Recall the chain rule, which states that if we have a function h(u(t)),  then
 We can differentiate f(x) symbolically using the chain rule:
 
 <img src=math3.png width="450">
- 
+
 and evaluate the function and its derivative at, for example, a=1:
 
 <img src=math4.png width="350">
- 
+
 The first derivative is rather ugly, and it will keep getting uglier if we take higher order derivatives. Consider the following similar but slighly modified approach:
 
 We can represent f(x) as a graph consisting of a series of computations:
@@ -58,20 +58,20 @@ This is conceptually the same thing that we did above when we differentiated sym
 
 Although this example is very simple for illustrative purposes, the same idea can be generalized to multivariate and vector-valued functions. The matrix of first-order partial derivatives of a vector-valued function is referred to as the __Jacobian matrix__ of the functon, J<sub>f</sub>(_x_). Rather than creating a direct mapping between an input vector _x_ and full the Jacobian of a given function J<sub>f</sub>(_x_), automatic differentiation evaluates the action of the Jacobian on a vector _u_, computing the __Jacobian-vector product__ J<i>u</i>. When we represent our function of interest, f,  as a composite of N elementary functions, f = f<sub>N</sub>◦f<sub>N-1</sub>...◦f<sub>2</sub>◦f<sub>1</sub>, we can represent the Jacobian as J = J<sub>N</sub>·J<sub>N-1</sub>...·J<sub>2</sub>·J<sub>1</sub> due to the chain rule. We seed _u_ as a unit vector and then recursively compute matrix-vector products:
 
-<p align="center"><i>u</i><sub>1</sub> = J<sub>1</sub><i>u</i></p align="center"> 
-<p align="center"><i>u</i><sub>n</sub> = J<sub>n</sub><i>u</i><sub>n-1</sub> </p align="center"> 
+<p align="center"><i>u</i><sub>1</sub> = J<sub>1</sub><i>u</i></p align="center">
+<p align="center"><i>u</i><sub>n</sub> = J<sub>n</sub><i>u</i><sub>n-1</sub> </p align="center">
 
 The unit vector chosen for _u_ detemines which variable we are deriving with respect to. Consequently, we are able to compute only the partial derivatives we need rather than computing the full Jacobian.
 
 This method of automatic differentiation (which is referred to as __forward mode__), can be very efficiently implemented as the previous evaluation trace can be overwritten at each step in the computation. We do not need to store the full sequence of evaluation traces. This is not true of other methods of automatic differentiation, such as reverse mode.
- 
+
 ## How to use `pyad`
 
 ### Set up
 
-**pyad** will be self contained on Github and should be installable using pip and the github ssh address, or through the more formal approaches laid out in the next section.
-```python
-pip install git+ssh://git@github.com/fire-breathing-rubber-lemons/cs207-FinalProject.git
+**pyad** will be self contained on Github and should be installable using pip and the github ssh address.
+```bash
+pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
 ```
 
 **pyad** will follow the standard Python packaging framework. To use **pyad** it will first need to be imported using.
@@ -79,22 +79,18 @@ pip install git+ssh://git@github.com/fire-breathing-rubber-lemons/cs207-FinalPro
 import pyad
 ```
 
-Specific classes or functions can be called  individual and will operate independently, for example:
-```python
-from pyad import forward_diff
-```
-
 ### Interaction Theory
 
-In general the **pyad** package will work on an object oriented, class based approach similar to sklearn or other similar modules. **pyad** will contain a number of classes which can be instantiated - these will be classes such as `Variable`, and occasionally `Tensor`. The user will create functions to be differentiated and initialize variables. There will not be a specific set of default inputs as each user may have a very different use case (differentiating a single variable or multi-variable function for instance).
+In general the **pyad** package will work on an object oriented, class based approach similar to numpy and pytorch. **pyad** will contain a number of classes which can be instantiated. These classes include `pyad.Tensor` which is our primary wrapper around numbers and their derivatives, and `pyad.Variable` which inherits `pyad.Tensor` and represents a variable that should be differentiated against. The user will create functions to be differentiated and initialize variables. There will not be a specific set of default inputs as each user may have a very different use case (differentiating a single variable or multi-variable function for instance).
 
 The user should be able to specify any differentiable function in the standard format, either a defined python function or a lambda function:
 ```python
-def test_function(x,y):
+def test_function(x, y):
     cos_x = pyad.cos(x)
     sin_y = pyad.sin(y)
     output = cos_x * sin_y
     return output
+
 
 lambda x, y: pyad.cos(x) * pyad.sin(y)
 ```
@@ -130,8 +126,6 @@ def test_fun(x, y, z):
 
 ## Software Organization
 
-## TODO
-
 #### Directory Structure
 The directory structure of the `pyad` package will be as follows where `cs207-FinalProject` is the name of the Github repository which hosts the package:
 
@@ -150,16 +144,19 @@ cs207-FinalProject/
 ```
 
 #### Modules
-The only module we plan on including at this point is the `pyad` module which will initially just contain functionality for forward autodifferentiation.
+We plan on having a module for the core `pyad` forward autodifferentiation package. We also will include a module for `tests/` as well a a potential module for `utiltiies/` such as the neural network library described below.
 
 #### Testing
-Our test suite will be located in the `tests/` directory of the package. To run our tests, we are tentatively planning to use both `TravisCI` as well as `CodeCov`.
+Our test suite will be located in the `tests/` directory of the package. To run our tests, we are planning to use both `TravisCI` as well as `CodeCov`.
 
 #### Distribution
-We are tentatively planning to release our package on PyPI under the package name `pyad-207`.
+The package will be distributed via Github and installed with pip by running:
+```bash
+pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
+```
 
 #### Packaging
-We will use [`setuptools`](https://packaging.python.org/tutorials/packaging-projects/) to package our software.
+We use [`setuptools`](https://packaging.python.org/tutorials/packaging-projects/) to package our software.
 
 ## Implementation details
 
@@ -168,16 +165,18 @@ We will use [`setuptools`](https://packaging.python.org/tutorials/packaging-proj
 #### Core Data Structures
 - `MultivariateDerivative`: a class to hold derivative information.
 - `Tensor`: a class that takes in variable values, and compute and store the derivatives.
-- `Variable`: a sub-class of `Tensor` that assigns variable values and initializes their derivatives to be 1. 
+- `Variable`: a sub-class of `Tensor` that assigns variable values and initializes their derivatives to be 1.
 
 #### Important attributes
-- Input variable names, such as x,y,z
-- Variable values and derivative values
+If `t` is `pyad.Tensor` object, then the user can access some import attributes of `t`:
+- `t.value` represents the actual numeric value of the object. `t.value` is a numpy object
+- `t.d` represents the `pyad.MultivariateDerivative` associated with the tensor.
+    - `t.d['x']` represents the derivative of `t` w.r.t. a variable named `'x'`
 
-#### External dependency
-`numpy` for elementary functions
+#### External dependencies
+We use `numpy` as the underlying storage backing our `pyad.Tensor` objects. We also use numpy to perform efficient mathematical computations.
 
-#### Elementray functions
+#### Elementary functions
 Add, Subtract, Multiply, Power, Trig functions, Inverse trig functions, Exponential function, Log function, Square root function, Cubic root function.
 
 #### To be implemented
@@ -189,7 +188,7 @@ Add, Subtract, Multiply, Power, Trig functions, Inverse trig functions, Exponent
 
 ## Future Features
 
-Looking at applications of automatic differentiation, the one which stands out most prominently is back propagation for Neural Networks, having also been covered within the Harvard course, Introduction to Data Science. 
+Looking at applications of automatic differentiation, the one which stands out most prominently is back propagation for Neural Networks, having also been covered within the Harvard course, Introduction to Data Science.
 
 <img src=nn_design.png width="700">
 
