@@ -133,18 +133,18 @@ The directory structure of the `pyad` package will be as follows where `cs207-Fi
 cs207-FinalProject/
     pyad/
         __init__.py
-        forward_autodiff.py
+        forward_diff.py
         utilities/
             __init__.py
             ... (potential non-essential tools and extensions)
         tests/
-            ... (tests for the core `forward_autodiff.py` as well as the utilities)
+            ... (tests for the core `forward_diff.py` as well as the utilities)
     docs/
         - ... (documentation about how to use pyad)
 ```
 
 #### Modules
-We plan on having a module for the core `pyad` forward autodifferentiation package. We also will include a module for `tests/` as well a a potential module for `utiltiies/` such as the neural network library described below.
+We plan on having a module for the core `pyad` forward autodifferentiation package. We also will include a module for `tests/` as well a potential module for `utiltiies/` such as the neural network library described below.
 
 #### Testing
 Our test suite will be located in the `tests/` directory of the package. To run our tests, we are planning to use both `TravisCI` as well as `CodeCov`.
