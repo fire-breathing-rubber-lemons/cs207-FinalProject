@@ -35,7 +35,7 @@ class MultivariateDerivative:
         str
             a string representing the derivative w.r.t all of the variables
         """
-        values = ', '.join(f'{k}={v:.3g}' for k, v in self.variables.items())
+        values = ', '.join(f'{k}={v}' for k, v in self.variables.items())
         return f'D({values})'
 
     def copy(self):
@@ -139,8 +139,43 @@ class Tensor:
     def norm(self):
         return np.linalg.norm(self.value)
 
+    def all(self):
+        return bool(np.all(self.value))
+
+    def any(self):
+        return bool(np.any(self.value))
+
+    # Comparisons work like they do in numpy. Derivative information is ignored
+    # numpy arrays are returned by comparisons
+    def __lt__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value < other_v
+
+    def __gt__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value > other_v
+
+    def __le__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value <= other_v
+
+    def __ge__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value >= other_v
+
+    def __eq__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value == other_v
+
+    def __ne__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value != other_v
+
+    def __bool__(self):
+        return bool(self.value)
+
     def __repr__(self):
-        return f'Tensor({self.value:.3g}, {self.d})'
+        return f'Tensor({self.value}, {self.d})'
 
     def __neg__(self):
         return Tensor(-self.value, self.d.mul(-1))

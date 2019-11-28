@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import pyad
+import pytest
 
 ################################
 #       End to End Tests       #
@@ -141,10 +142,6 @@ def test_case_base_root():
     true_value = 4
     true_x_deriv = 0.25
     true_y_deriv = 0.0833333333333333
-
-    print(function.value)
-    print(function.d['x'])
-    print(function.d['y'])
 
     assert math.isclose(function.value, true_value, rel_tol=1e-12)
     assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
@@ -403,3 +400,66 @@ def test_var_function():
     assert test_var1.value == np.array(5)
     assert type(test_var1.d) == pyad.MultivariateDerivative
     assert test_var1.d.variables == {'x':1}
+
+
+#### Tests on the Tensor Class Object ####
+
+def test_comparisons():
+    """
+    Check that comparison operators work for Tensors
+    """
+    t1 = pyad.Tensor([1, 12, 3, 4, 5])
+    t2 = pyad.Tensor([4, 2, 3, 1, 10])
+
+    # test against another Tensor
+    assert ((t1 < t2) == np.array([1, 0, 0, 0, 1])).all()
+    assert ((t1 > t2) == np.array([0, 1, 0, 1, 0])).all()
+    assert ((t1 <= t2) == np.array([1, 0, 1, 0, 1])).all()
+    assert ((t1 >= t2) == np.array([0, 1, 1, 1, 0])).all()
+    assert ((t1 == t2) == np.array([0, 0, 1, 0, 0])).all()
+    assert ((t1 != t2) == np.array([1, 1, 0, 1, 1])).all()
+
+    # test against a non-Tensor
+    assert ((t1 < 3) == np.array([1, 0, 0, 0, 0])).all()
+    assert ((t1 > 3) == np.array([0, 1, 0, 1, 1])).all()
+    assert ((t1 <= 3) == np.array([1, 0, 1, 0, 0])).all()
+    assert ((t1 >= 3) == np.array([0, 1, 1, 1, 1])).all()
+    assert ((t1 == 3) == np.array([0, 0, 1, 0, 0])).all()
+    assert ((t1 != 3) == np.array([1, 1, 0, 1, 1])).all()
+
+
+def test_any_all():
+    t1 = pyad.Tensor([0, 0, 0])
+    assert t1.any() is False
+    assert t1.all() is False
+
+    t2 = pyad.Tensor([1, 2, 3])
+    assert t2.any() is True
+    assert t2.all() is True
+
+    t3 = pyad.Tensor([0, 1, 2])
+    assert t3.any() is True
+    assert t3.all() is False
+
+    t4 = pyad.Tensor(1)
+    assert t4.any() is True
+    assert t4.all() is True
+
+    t5 = pyad.Tensor([])
+    assert t5.any() is False
+    assert t5.all() is True
+
+
+def test_bool():
+    """
+    Check that you should only be able to call bool() on a singleton Tensor
+    """
+    t0 = pyad.Tensor(0)
+    t1 = pyad.Tensor([1])
+    t2 = pyad.Tensor([1, 2, 3, 4])
+
+    assert bool(t0) is False
+    assert bool(t1) is True
+
+    with pytest.raises(ValueError):
+        bool(t2)
