@@ -13,31 +13,35 @@ class MultivariateDerivative:
     Parameters
     ----------
     variables : dict
-        Store the name and value of the derivative object allowing for multiple variable keys
+        Store the name and value of the derivative object allowing for multiple
+        variable keys
 
     Attributes
     ----------
     variables : dict
         Internal storage of the named derivative values in dictionary format
     """
+
     def __init__(self, variables=None):
         self.variables = variables or {}
 
     def __repr__(self):
         """
-        Create a descriptive object for printing, D noting that the object is a derivative
+        Create a descriptive object for printing, D noting that the object is a
+        derivative
 
         Returns
         -------
         str
-            a string representing the value of the derivative of the MultivariateDerivative object
+            a string representing the derivative w.r.t all of the variables
         """
-        values = ', '.join(f'{k}={v:.3g}' for k, v in self.variables.items())
+        values = ', '.join(f'{k}={v}' for k, v in self.variables.items())
         return f'D({values})'
 
     def copy(self):
         """
-        Given an existing MultivariateDerivative object (self) create a new one as a copy
+        Given an existing MultivariateDerivative object (self) create a new one
+        as a copy
 
         Returns
         -------
@@ -48,8 +52,9 @@ class MultivariateDerivative:
 
     def __getitem__(self, key):
         """
-        Access the derivative of one of the variables in the object, print(MultivariateDerivative)
-        will reveal the existing keys within the instance.
+        Access the derivative of one of the variables in the object.
+        instance.variables.keys() will reveal the existing keys within the
+        instance
 
         Returns
         -------
@@ -61,9 +66,9 @@ class MultivariateDerivative:
     # the only way to combine derivatives is with addition or multiplication
     def __add__(self, other):
         """
-        Adds this and another MultivariateDerivative object together and produces
-        a new MultivariateDerivative object whose variable set is the union
-        of the two individuals.
+        Adds this and another MultivariateDerivative object together and
+        produces a new MultivariateDerivative object whose variable set is the
+        union of the two individuals.
 
         Returns
         -------
@@ -95,9 +100,10 @@ class MultivariateDerivative:
 
 class Tensor:
     """
-    Tensor (constant value) is the base class of the Variable and can be used to represent
-    constant values where the derivative is not required for automatic computation during
-    automatic differentiation. Derivative by default is set to an empty dictionary.
+    Tensor (constant value) is the base class of the Variable and can be used to
+    represent constant values where the derivative is not required for automatic
+    computation during automatic differentiation. Derivative by default is set
+    to an empty dictionary.
 
     Parameters
     ----------
@@ -105,8 +111,8 @@ class Tensor:
         Store the value of the constant
 
     d : MultivariateDerivative
-        Store the value of the derivative (default is an empty MultivariateDerivative)
-        but can be manually set to a specific value
+        Stores the value of the derivative. The default is an empty
+        MultivariateDerivative, but it can be manually set to a specific value
 
     Attributes
     ----------
@@ -133,8 +139,43 @@ class Tensor:
     def norm(self):
         return np.linalg.norm(self.value)
 
+    def all(self):
+        return bool(np.all(self.value))
+
+    def any(self):
+        return bool(np.any(self.value))
+
+    # Comparisons work like they do in numpy. Derivative information is ignored
+    # numpy arrays are returned by comparisons
+    def __lt__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value < other_v
+
+    def __gt__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value > other_v
+
+    def __le__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value <= other_v
+
+    def __ge__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value >= other_v
+
+    def __eq__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value == other_v
+
+    def __ne__(self, other):
+        other_v, _ = Tensor.get_value_and_deriv(other)
+        return self.value != other_v
+
+    def __bool__(self):
+        return bool(self.value)
+
     def __repr__(self):
-        return f'Tensor({self.value:.3g}, {self.d})'
+        return f'Tensor({self.value}, {self.d})'
 
     def __neg__(self):
         return Tensor(-self.value, self.d.mul(-1))
@@ -185,9 +226,9 @@ class Tensor:
 
 class Variable(Tensor):
     """
-    Variable (a variable value for the purposes of differentiation). A variable is used to
-    represent any value which the user wishes to include in the partial derivative outputs
-    and is built on top of the Tensor base class.
+    Variable (a variable value for the purposes of differentiation). A variable
+    is used to represent any value which the user wishes to include in the
+    partial derivative outputs and is built on top of the Tensor base class.
 
     As a variable a name parameter is required (example: x, y or z).
 
@@ -200,8 +241,8 @@ class Variable(Tensor):
         Store the value of the variable
 
     d : MultivariateDerivative
-        Store the value of the derivative, default is an array of 1's (unit vectors) which
-        will result in the computation of the Jacobian
+        Store the value of the derivative, default is an array of 1's
+        (unit vectors) which will result in the computation of the Jacobian
 
     Attributes
     ----------
@@ -225,13 +266,14 @@ class Variable(Tensor):
 # Elementary operations of a single variable. They all use chain rule.
 def _elementary_op(obj, fn, deriv_fn):
     """
-    A generic framework to allow for the chain rule of other elementary functions
-    taken from the numpy module.
+    A generic framework to allow for the chain rule of other elementary
+    functions taken from the numpy module.
 
     Parameters
     ----------
     obj : Class
-        The Variable or Tensor which the elementary function is being differentiated at
+        The Variable or Tensor which the elementary function is being
+        differentiated at
 
     fn : np.function
         The elementary function from the numpy module
@@ -253,13 +295,14 @@ def _elementary_op(obj, fn, deriv_fn):
 
 def sin(tensor):
     """
-    pyad sin - to calculate a Tensor (value and derivative) of the sine function
+    pyad sin - computes the sine function
         sine differentiates to cosine
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the sin function is being differentiated at
+        The value of the variable or constant which the sin function is
+        being differentiated at
 
     Returns
     -------
@@ -271,13 +314,14 @@ def sin(tensor):
 
 def cos(tensor):
     """
-    pyad cos - to calculate a Tensor (value and derivative) of the cosine function
+    pyad cos - computes the cosine function
         cosine differentiates to minus sine
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the cosine function is being differentiated at
+        The value of the variable or constant which the cosine function is
+        being differentiated at
 
     Returns
     -------
@@ -289,13 +333,14 @@ def cos(tensor):
 
 def tan(tensor):
     """
-    pyad tan - to calculate a Tensor (value and derivative) of the tangent function
+    pyad tan - computes the tangent function
         The tangent of x differentiates to sec^2(x) (1/cos^2(x))
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the tangent function is being differentiated at
+        The value of the variable or constant which the tangent function is
+        being differentiated at
 
     Returns
     -------
@@ -307,13 +352,14 @@ def tan(tensor):
 
 def arcsin(tensor):
     """
-    pyad arcsin - to calculate a Tensor (value and derivative) of the arcsine function
+    pyad arcsin - computes the arcsine function
         The arcsine of x differentiates to 1/√(1-x^2)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the arcsine function is being differentiated at
+        The value of the variable or constant which the arcsine function is
+        being differentiated at
 
     Returns
     -------
@@ -325,13 +371,14 @@ def arcsin(tensor):
 
 def arccos(tensor):
     """
-    pyad arccos - to calculate a Tensor (value and derivative) of the arccosine function
+    pyad arccos - computes the arccosine function
         The arccosine of x differentiates to -1/√(1-x^2)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the arccosine function is being differentiated at
+        The value of the variable or constant which the arccosine function is
+        being differentiated at
 
     Returns
     -------
@@ -343,13 +390,14 @@ def arccos(tensor):
 
 def arctan(tensor):
     """
-    pyad arctan - to calculate a Tensor (value and derivative) of the arctangent function
+    pyad arctan - computes the arctangent function
         The arctangent of x differentiates to 1/(1+x^2)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the arctangent function is being differentiated at
+        The value of the variable or constant which the arctangent function is
+        being differentiated at
 
     Returns
     -------
@@ -358,15 +406,17 @@ def arctan(tensor):
     """
     return _elementary_op(tensor, np.arctan, lambda x: 1 / (1 + x ** 2))
 
+
 def sinh(tensor):
     '''
-    pyad sinh - to calculate a Tensor (value and derivative) of the hyperbolic sine function
+    pyad sinh - computes the hyperbolic sine function
         The sinh of x differentiates to cosh(x)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the sinh function is being differentiated at
+        The value of the variable or constant which the sinh function is
+        being differentiated at
 
     Returns
     -------
@@ -375,15 +425,17 @@ def sinh(tensor):
     '''
     return _elementary_op(tensor, np.sinh, np.cosh)
 
+
 def cosh(tensor):
     '''
-    pyad cosh - to calculate a Tensor (value and derivative) of the hyperbolic cosine function
+    pyad cosh - computes the hyperbolic cosine function
         The cosh of x differentiates to sinh(x)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the cosh function is being differentiated at
+        The value of the variable or constant which the cosh function is
+        being differentiated at
 
     Returns
     -------
@@ -392,15 +444,17 @@ def cosh(tensor):
     '''
     return _elementary_op(tensor, np.cosh, np.sinh)
 
+
 def tanh(tensor):
     '''
-    pyad tanh - to calculate a Tensor (value and derivative) of the hyperbolic tangent function
+    pyad tanh - computes the hyperbolic tangent function
         The tanh of x differentiates to 1/cosh^2(x)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the cosh function is being differentiated at
+        The value of the variable or constant which the cosh function is
+        being differentiated at
 
     Returns
     -------
@@ -409,9 +463,10 @@ def tanh(tensor):
     '''
     return _elementary_op(tensor, np.tanh, lambda x: 1/(np.cosh(x)**2))
 
+
 def abs(tensor):
     """
-    pyad abs - to calculate a Tensor (value and derivative) of the absolute value function
+    pyad abs - computes the absolute value function
         For simplicity, we have defined the absolute value derviative to be the
         sign of the argument:
             if x > 0:  return 1
@@ -421,7 +476,8 @@ def abs(tensor):
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the absolute value function is being differentiated at
+        The value of the variable or constant which the absolute value function
+        is being differentiated at
 
     Returns
     -------
@@ -433,13 +489,14 @@ def abs(tensor):
 
 def exp(tensor):
     """
-    pyad exp - to calculate a Tensor (value and derivative) of the exponential function, e^x
+    pyad exp - computes the exponential function, e^x
         e^x differentiates to e^x
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the exponential function is being differentiated at
+        The value of the variable or constant which the exponential function is
+        being differentiated at
 
     Returns
     -------
@@ -449,33 +506,74 @@ def exp(tensor):
     return _elementary_op(tensor, np.exp, np.exp)
 
 
-def log(tensor):
+def log(tensor, base=np.e):
     """
-    pyad log - to calculate a Tensor (value and derivative) of the natural logarithm function
+    pyad log - computes the natural logarithm function
         The natural logarithm of x differentiates to 1/x
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the natural logarithm is being differentiated at
+        The value of the variable or constant which the natural logarithm is
+        being differentiated at
+
+    base: float
+        The base of the logarithm. Defaults to np.e.
 
     Returns
     -------
     Tensor: class
         Applies chain rule as appropriate and returns the resulting Tensor
     """
-    return _elementary_op(tensor, np.log, lambda x: 1 / x)
+    return _elementary_op(tensor, np.log, lambda x: 1 / x) / np.log(base)
+
+
+def log2(tensor):
+    """
+    pyad log2 - a wrapper of log to computes logarithm base 2
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the function is
+        being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
+    return log(tensor, base=2)
+
+
+def log10(tensor):
+    """
+    pyad log10 - a wrapper of log to computes logarithm base 10
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the function is
+        being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
+    return log(tensor, base=10)
 
 
 def sqrt(tensor):
     """
-    pyad sqrt - to calculate a Tensor (value and derivative) of the square root function
+    pyad sqrt - computes the square root function
         The square root of x differentiates to 1/(2√x)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the square root is being differentiated at
+        The value of the variable or constant which the square root is
+        being differentiated at
 
     Returns
     -------
@@ -487,13 +585,14 @@ def sqrt(tensor):
 
 def cbrt(tensor):
     """
-    pyad cbrt - to calculate a Tensor (value and derivative) of the cube root function
+    pyad cbrt - computes the cube root function
         The cube root of x differentiates to 1/(3x^(2/3))
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the cube root is being differentiated at
+        The value of the variable or constant which the cube root is
+        being differentiated at
 
     Returns
     -------
@@ -506,13 +605,15 @@ def cbrt(tensor):
 @runtime_warning_filter
 def power(base, exp):
     """
-    pyad power - to calculate a Tensor (value and derivative) of the power function
-        The power function is differentiated using the power rule, d/dx(x^a) = ax^(a-1)
+    pyad power - computes the power function
+        The power function is differentiated using the generalized power rule:
+            d/dx[a^b] = d/dx[exp(ln(a) * b)] = a^b * (b' * ln(a) + a'/a * b)
 
     Parameters
     ----------
     tensor : class
-        The value of the variable or constant which the power function is being differentiated at
+        The value of the variable or constant which the power function is
+        being differentiated at
 
     Returns
     -------
