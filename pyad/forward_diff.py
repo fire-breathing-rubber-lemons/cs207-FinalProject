@@ -505,6 +505,26 @@ def exp(tensor):
     """
     return _elementary_op(tensor, np.exp, np.exp)
 
+def sigmoid(tensor):
+    """
+    pyad sigmoid - computes the standard logistic function, sigmoid
+        the derivative of a sigmoid f(x) is f(x)(1-f(x))
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the exponential function is
+        being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """ 
+    f = lambda x: 1/(1+np.exp(-x))
+    df = lambda x: np.exp(-x)/(1+np.exp(-x))**2
+    return _elementary_op(tensor, f, df)   
+
 
 def log(tensor, base=np.e):
     """
