@@ -80,7 +80,9 @@ class MultivariateDerivative:
         var_set = set(self.variables.keys()) | set(other.variables.keys())
         result = {}
         for v in var_set:
-            result[v] = self.variables.get(v, 0) + other.variables.get(v, 0)
+            a, b = self.variables.get(v, 0), other.variables.get(v, 0)
+            a, b = self._broadcast(a, b)
+            result[v] = a + b
         return MultivariateDerivative(result)
 
     def mul(self, multiplier):
@@ -96,7 +98,8 @@ class MultivariateDerivative:
         """
         result = {}
         for k, v in self.variables.items():
-            result[k] = multiplier * v
+            a, b = self._broadcast(multiplier, v)
+            result[k] = a * b
         return MultivariateDerivative(result)
 
     def get_idx(self, i):
@@ -142,8 +145,26 @@ class MultivariateDerivative:
         None
         """
         for k, v in self.variables.items():
-            if v.shape == ():
-                self.variables[k] = np.ones(value.shape, dtype=v.dtype) * v
+            if len(v.shape) < len(value.shape):
+                a, b = self._broadcast(value, v)
+                self.variables[k] = np.zeros(a.shape, dtype=b.dtype) + b
+
+    def _broadcast(self, v1, v2):
+        """
+        Given two np.arrays, this function figures out the appropriate indexing
+        for both variables which would allow the two operands to broadcast.
+        """
+        v1, v2 = np.array(v1), np.array(v2)
+        if len(v1.shape) < len(v2.shape):
+            idx = tuple(slice(None) for i in range(len(v1.shape)))
+            idx = idx + (None,) * (len(v2.shape) - len(v1.shape))
+            return v1[idx], v2
+        elif len(v1.shape) > len(v2.shape):
+            idx = tuple(slice(None) for i in range(len(v2.shape)))
+            idx = idx + (None,) * (len(v1.shape) - len(v2.shape))
+            return v1, v2[idx]
+        else:
+            return v1, v2
 
 
 class Tensor:
@@ -185,9 +206,15 @@ class Tensor:
             return other.value, other.d
         return other, MultivariateDerivative()
 
-    def norm(self):
+    def sum(self):
+        if self.shape == ():
+            return Tensor(self)
+        return sum(self, Tensor(0))
 
-        return np.linalg.norm(self.value)
+    def norm(self, d=2):
+        if self.shape == ():
+            return Tensor(self)
+        return power(sum(x ** d for x in self), 1/d)
 
     def all(self):
         return bool(np.all(self.value))
@@ -727,7 +754,7 @@ def logistic(tensor):
     return 1 / (1 + exp(-tensor))
 
 
-# functions for matrix operatoions
+# functions for vector operatoions
 def stack(tensors):
     """
     pyad stack - combines multiple pyad Tensors into a single tensor by stacking
@@ -740,7 +767,7 @@ def stack(tensors):
     Returns
     -------
     Tensor: class
-        Applies chain rule as appropriate and returns the resulting Tensor
+        The resulting derivative is computed by stacking the individual components
     """
     if len(tensors) == 0:
         raise ValueError('need at least one tensor to stack')

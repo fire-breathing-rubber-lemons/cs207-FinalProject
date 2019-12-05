@@ -39,16 +39,12 @@ def test_newtons_method():
     assert f(res).value < 1e-10
 
 
-def gauss_newton(f, init, max_rounds=100, max_diff=1e-12):
+def gauss_newton_method(f, init, max_rounds=100, max_diff=1e-12):
     prev_x = x = init
 
-    print()
     for i in range(max_rounds):
         res = f(pyad.var('x', x))
         J = res.d['x']
-        print('Jacobian\n=========')
-        print(J)
-        print()
         x = x - np.linalg.pinv(J.T @ J) @ J.T @ res.value
         if np.linalg.norm(x - prev_x) < max_diff:
             break
@@ -57,9 +53,9 @@ def gauss_newton(f, init, max_rounds=100, max_diff=1e-12):
 
 
 def test_gauss_newton():
-    # return
-    # raise Exception
-
+    """
+    Test a version of Gauss newton for vector functions
+    """
     def norm(x, d=2):
         return sum(v**d for v in x) ** (1/d)
 
@@ -72,10 +68,6 @@ def test_gauss_newton():
         [1, 1], [-1, 1], [1, -1], [-1, -1]
     ]
 
-    print('Solutions Points to f(d) = (0, 0)')
-    print('=================================')
     for init in init_points:
-        sol = gauss_newton(f, init)
-        sol_str = '(' + ', '.join(map(str, sol.round(6))) + ')'
-        print(f'f{sol_str:<22} = {f(sol).value.round(12)}')
-    print('\n')
+        sol = gauss_newton_method(f, init)
+        assert f(sol).norm().value < 1e-10

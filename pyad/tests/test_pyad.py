@@ -220,20 +220,45 @@ def test_norm_tensor_single_value():
     """
     Ensure the norm function correctly calculates euclidian norm
     """
-    test_tensor = pyad.Tensor(3)
-    norm_output = test_tensor.norm()
+    test_tensor = pyad.Variable('x', 2) + pyad.Variable('y', 3)
+    norm = test_tensor.norm()
 
-    assert norm_output == 3.0
+    assert norm.value == 5
+    assert norm.d['x'] == 1
+    assert norm.d['y'] == 1
 
 
 def test_norm_tensor_single_vector():
     """
     Ensure the norm function correctly calculates euclidian norm
     """
-    test_tensor = pyad.Tensor([2,2,1])
-    norm_output = test_tensor.norm()
+    test_tensor = pyad.Tensor([2, 2, 1]) * pyad.Variable('x', 4)
+    norm = test_tensor.norm()
 
-    assert norm_output == 3.0
+    assert norm.value == 12
+    assert norm.d['x'] == 3
+
+
+def test_sum():
+    """
+    Tests the sum function
+    """
+
+    # test sum of a vector
+    t = pyad.Tensor([1, 2, 3]) * pyad.var('x', 1) + pyad.var('y', 3)
+    res = t.sum()
+
+    assert res.value == 15
+    assert res.d['x'] == 6
+    assert res.d['y'] == 3
+
+    # test sum of a scalar
+    assert res.shape == ()
+
+    res = res.sum()
+    assert res.value == 15
+    assert res.d['x'] == 6
+    assert res.d['y'] == 3
 
 
 def test_repr():
@@ -481,6 +506,7 @@ def test_bool():
     with pytest.raises(ValueError):
         bool(t2)
 
+
 ### Tests for vector operations ###
 def test_simple_vector_arithmetic():
     """
@@ -492,10 +518,6 @@ def test_simple_vector_arithmetic():
     t1 = pyad.Tensor([1, 2, 3])
     t2 = pyad.Tensor([5, 6, 7])
     res = t1*v1 - t2*v2
-
-    print('\nres.d["x"]')
-    print(res.d['x'])
-    print('==========')
 
     assert np.array_equal(res.value, np.array([-45, -50, -55]))
     assert np.array_equal(res.d['x'], np.array([1, 2, 3]))
@@ -635,8 +657,13 @@ def test_vector_var_setitem():
     Tests setting indexes in a Tensor with vector variables
     """
     v1 = pyad.var('x', [1, 2, 3])
+    v2 = pyad.var('y', [2, 3, 4])
+    res = 2 * v1 * v2
 
-    pass  # TODO
+    res[0] += res[1] + res[2] / 2
+    assert np.array_equal(res.value, [28, 12, 24])
+    assert np.array_equal(res.d['x'], [[4, 6, 4], [0, 6, 0], [0, 0, 8]])
+    assert np.array_equal(res.d['y'], [[2, 4, 3], [0, 4, 0], [0, 0, 6]])
 
 
 def test_shape_and_len():
@@ -667,8 +694,7 @@ def test_iter():
     """
     v1 = pyad.Tensor(0)
     with pytest.raises(TypeError):
-        for x in v1:
-            pass
+        iter(v1)
 
     v2 = pyad.Tensor([0, 1], d=pyad.MultivariateDerivative({'x': [1, 2], 'y': [3, 4]}))
     res = []
@@ -698,24 +724,24 @@ def test_stack():
     assert np.array_equal(res.d['x'], np.array([[1, 2, 3], [0, 0, 0]]))
     assert np.array_equal(res.d['y'], np.array([[0, 0, 0], [4, 5, 6]]))
 
-    # stack with vector variables: TODO
-    # t1 = pyad.Tensor([1, 2, 3]) * pyad.var('x', [1, 2, 3])
-    # t2 = pyad.Tensor([4, 5, 6]) * pyad.var('y', [4, 5, 6])
+    # stack with vector variables
+    t1 = pyad.Tensor([2, 3, 4]) * pyad.var('x', [1, 2, 3])
+    t2 = pyad.Tensor([5, 6, 7]) * pyad.var('y', [4, 5, 6])
 
-    # print('\n==============')
+    res = pyad.stack([t1.sum(), t2.sum()])
+    assert np.array_equal(res.value, np.array([20, 92]))
+    assert np.array_equal(res.d['x'], [[2, 3, 4], [0, 0, 0]])
+    assert np.array_equal(res.d['y'], [[0, 0, 0], [5, 6, 7]])
 
-    # res = pyad.stack([t1, t2])
-    # print(res.shape)
-    # # print(res.value)
-    # # print()
-    # # print(res.d['x'])
-    # # print()
-    # print(res.d['y'].shape)
+    res = res + pyad.var('a', 1)
+    res = res * pyad.var('b', [3, 4])
+    assert np.array_equal(res.d['a'], [3, 4])
+    assert np.array_equal(res.d['b'], [[21, 0], [0, 93]])
 
-    # print('doing the thing')
-    # res2 = res + pyad.var('z', [1, 2, 3])
-    # print(res2.value)
+    # test stack of an empty list
+    with pytest.raises(ValueError):
+        pyad.stack([])
 
-    # print('=================')
-
-    # TODO: fix coverage issues
+    # test stack with inconsistent shapes
+    with pytest.raises(ValueError):
+        pyad.stack([pyad.var('x', 1), pyad.var('x', [1, 2, 3])])
