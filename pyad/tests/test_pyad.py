@@ -84,19 +84,6 @@ def test_case_base_exp():
     assert math.isclose(function.value, true_value, rel_tol=1e-12)
     assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
-def test_case_sigmoid():
-    """
-    Testing sigmoid function
-    """
-    x = pyad.var('x', 2)
-    function = pyad.sigmoid(x)
-
-    # Calculated using numpy
-    true_value = 0.8807970779778823
-    true_x_deriv = 0.10499358540350662
-
-    assert math.isclose(function.value, true_value, rel_tol=1e-12)
-    assert math.isclose(function.d['x'], true_x_deriv, rel_tol=1e-12)
 
 def test_case_base_log():
     """

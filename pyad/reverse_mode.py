@@ -127,7 +127,7 @@ def abs(x):
 def exp(x):
 	return _elementary_op(x, np.exp, np.exp)
 
-def sigmoid(x):
+def logistic(x):
 	f = lambda x: 1/(1+np.exp(-x))
 	df = lambda x: np.exp(-x)/(1+np.exp(-x))**2
 	return _elementary_op(x, f, df)
@@ -146,7 +146,3 @@ def sqrt(x):
 
 def cbrt(x):
 	return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x**(2/3)))
-
-
-
-
