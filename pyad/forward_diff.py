@@ -1,4 +1,5 @@
 import numpy as np
+from collections import defaultdict
 
 # we use this to get rid of disruptive runtime warnings
 runtime_warning_filter = np.testing.suppress_warnings()
@@ -23,7 +24,8 @@ class MultivariateDerivative:
     """
 
     def __init__(self, variables=None):
-        self.variables = variables or {}
+        variables = variables or {}
+        self.variables = {k: np.array(v) for k, v in variables.items()}
 
     def __repr__(self):
         """
@@ -75,10 +77,12 @@ class MultivariateDerivative:
         MultivariateDerivative
             a new MultivariateDerivative object
         """
-        all_variables = set(self.variables.keys()) | set(other.variables.keys())
+        var_set = set(self.variables.keys()) | set(other.variables.keys())
         result = {}
-        for v in all_variables:
-            result[v] = self.variables.get(v, 0) + other.variables.get(v, 0)
+        for v in var_set:
+            a, b = self.variables.get(v, 0), other.variables.get(v, 0)
+            a, b = self._broadcast(a, b)
+            result[v] = a + b
         return MultivariateDerivative(result)
 
     def mul(self, multiplier):
@@ -94,8 +98,73 @@ class MultivariateDerivative:
         """
         result = {}
         for k, v in self.variables.items():
-            result[k] = multiplier * v
+            a, b = self._broadcast(multiplier, v)
+            result[k] = a * b
         return MultivariateDerivative(result)
+
+    def get_idx(self, i):
+        """
+        Returns a copy of the MultivariateDerivative with the desired index
+        `i` from each variable selected
+
+        Returns
+        -------
+        MultivariateDerivative
+            a new MultivariateDerivative object
+        """
+        result = {k: v[i] for k, v in self.variables.items()}
+        return MultivariateDerivative(result)
+
+    def set_idx(self, i, other, tensor_value):
+        """
+        Modifies the MultivariateDerivative by updating with the desired index
+        `i` in each variable. There cannot be any variables in `other` that
+        are not already in the current variable set
+
+        Returns
+        -------
+        None
+        """
+        for k, v in self.variables.items():
+            if k not in other.variables:
+                self.variables[k][i] *= 0
+
+        for k, v in other.variables.items():
+            if k not in self.variables:
+                self.variables[k] = np.zeros(tensor_value.shape)
+            self.variables[k][i] = other.variables[k]
+
+    def _fix_shape(self, value):
+        """
+        If a vector Tensor and a scalar variable are added, then it's possible
+        that the MultivariateDerivative that results won't have the right shape.
+        This fixes any shapes based on the shape of the Tensor by broadcasting
+
+        Returns
+        -------
+        None
+        """
+        for k, v in self.variables.items():
+            if len(v.shape) < len(value.shape):
+                a, b = self._broadcast(value, v)
+                self.variables[k] = np.zeros(a.shape, dtype=b.dtype) + b
+
+    def _broadcast(self, v1, v2):
+        """
+        Given two np.arrays, this function figures out the appropriate indexing
+        for both variables which would allow the two operands to broadcast.
+        """
+        v1, v2 = np.array(v1), np.array(v2)
+        if len(v1.shape) < len(v2.shape):
+            idx = tuple(slice(None) for i in range(len(v1.shape)))
+            idx = idx + (None,) * (len(v2.shape) - len(v1.shape))
+            return v1[idx], v2
+        elif len(v1.shape) > len(v2.shape):
+            idx = tuple(slice(None) for i in range(len(v2.shape)))
+            idx = idx + (None,) * (len(v1.shape) - len(v2.shape))
+            return v1, v2[idx]
+        else:
+            return v1, v2
 
 
 class Tensor:
@@ -129,6 +198,7 @@ class Tensor:
 
         self.value = np.array(value)
         self.d = d or MultivariateDerivative()
+        self.d._fix_shape(self.value)
 
     @staticmethod
     def get_value_and_deriv(other):
@@ -136,14 +206,32 @@ class Tensor:
             return other.value, other.d
         return other, MultivariateDerivative()
 
-    def norm(self):
-        return np.linalg.norm(self.value)
+    def sum(self):
+        if self.shape == ():
+            return Tensor(self)
+        return sum(self, Tensor(0))
+
+    def norm(self, d=2):
+        if self.shape == ():
+            return Tensor(self)
+        return power(sum(x ** d for x in self), 1/d)
 
     def all(self):
         return bool(np.all(self.value))
 
     def any(self):
         return bool(np.any(self.value))
+
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        size = len(self)
+        return (self[i] for i in range(size))
+
+    @property
+    def shape(self):
+        return self.value.shape
 
     # Comparisons work like they do in numpy. Derivative information is ignored
     # numpy arrays are returned by comparisons
@@ -222,6 +310,13 @@ class Tensor:
         return power(other, self)
 
     # TODO: matrix operators like dot prod, matrix mult, inverse, tranpose, etc
+    def __getitem__(self, i):
+        return Tensor(self.value[i], self.d.get_idx(i))
+
+    def __setitem__(self, i, other):
+        other_v, other_d = Tensor.get_value_and_deriv(other)
+        self.d.set_idx(i, other_d, self.value)
+        self.value[i] = other_v
 
 
 class Variable(Tensor):
@@ -241,8 +336,8 @@ class Variable(Tensor):
         Store the value of the variable
 
     d : MultivariateDerivative
-        Store the value of the derivative, default is an array of 1's
-        (unit vectors) which will result in the computation of the Jacobian
+        Store the value of the derivative, default is the identity matrix
+        which will result in the computation of the Jacobian
 
     Attributes
     ----------
@@ -258,9 +353,21 @@ class Variable(Tensor):
     def __init__(self, name, value):
         self.name = name
         self.value = np.array(value)
-        self.d = MultivariateDerivative({
-            name: np.ones(self.value.shape)
-        })
+
+        if len(self.value.shape) >= 2:
+            raise ValueError('Variable does not support dimensions >= 2')
+
+        if self.value.shape == (0,):
+            raise ValueError('Cannot have an empty value for Variable')
+
+        if self.value.shape == ():
+            self.d = MultivariateDerivative({
+                name: np.array(1)
+            })
+        else:
+            self.d = MultivariateDerivative({
+                name: np.eye(len(self.value))
+            })
 
 
 # Elementary operations of a single variable. They all use chain rule.
@@ -627,6 +734,69 @@ def power(base, exp):
     a = base_d.mul(exp_v * base_v ** (exp_v - 1.0))
     b = exp_d.mul(result * np.log(base_v))
     return Tensor(result, a + b)
+
+
+def logistic(tensor):
+    """
+    pyad logistic - computes the logistic function: 1 / (1 + exp(-x))
+
+    Parameters
+    ----------
+    tensor : class
+        The value of the variable or constant which the logistic function is
+        being differentiated at
+
+    Returns
+    -------
+    Tensor: class
+        Applies chain rule as appropriate and returns the resulting Tensor
+    """
+    return 1 / (1 + exp(-tensor))
+
+
+# functions for vector operatoions
+def stack(tensors):
+    """
+    pyad stack - combines multiple pyad Tensors into a single tensor by stacking
+
+    Parameters
+    ----------
+    tensors : List[Tensor]
+        The list of tensors that stack
+
+    Returns
+    -------
+    Tensor: class
+        The resulting derivative is computed by stacking the individual components
+    """
+    if len(tensors) == 0:
+        raise ValueError('need at least one tensor to stack')
+
+    values = []
+    derivs = []
+    var_set = set()
+    for t in tensors:
+        v, d = Tensor.get_value_and_deriv(t)
+        values.append(v)
+        derivs.append(d)
+        var_set |= set(d.variables.keys())
+
+    variables = defaultdict(list)
+    for k in var_set:
+        d_vals = [d.variables[k] for d in derivs if k in d.variables]
+        if not all(v.shape == d_vals[0].shape for v in d_vals):
+            raise ValueError('all input tensors must have the same shape')
+
+        for d in derivs:
+            if k not in d.variables:
+                variables[k].append(np.zeros(d_vals[0].shape))
+            else:
+                variables[k].append(d.variables[k])
+
+        variables[k] = np.array(variables[k])
+
+    stacked_d = MultivariateDerivative(dict(variables))
+    return Tensor(np.stack(values), stacked_d)
 
 
 # wrappers around Tensor and Variable constructors
