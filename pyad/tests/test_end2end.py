@@ -1,13 +1,13 @@
-import pyad
+import pyad.forward_diff as fwd
 
 
 def newtons_method(f, init, max_iters=1000):
     x = init
-    old_res = f(pyad.var('x', x))
+    old_res = f(fwd.var('x', x))
 
     for i in range(max_iters):
         x = x - old_res.value / old_res.d['x']
-        res = f(pyad.var('x', x))
+        res = f(fwd.var('x', x))
         if abs(res.value - old_res.value) < 1e-10:
             break
         old_res = res
@@ -32,7 +32,7 @@ def test_newtons_method():
 
     # a function with infinitely many roots
     def f(x):
-        return pyad.sin(pyad.exp(x))
+        return fwd.sin(fwd.exp(x))
 
     res = newtons_method(f, 100)
     assert f(res).value < 1e-10
