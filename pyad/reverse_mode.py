@@ -1,27 +1,31 @@
 import numpy as np
 
-class Reverse:
+class Tensor:
 
 	def __init__(self, value):
 		self.value = value
 		self.children = []
 		self.grad_value = None
 
-	def get_grad(self):
+	def backward(self):
+		self.grad_value = 1.0
+
+	@property
+	def grad(self):
 		if self.grad_value is None:
-		    self.grad_value = sum(weight * var.get_grad() for weight, var in self.children)
+		    self.grad_value = sum(weight * var.grad for weight, var in self.children)
 		return self.grad_value
 
 	def __neg__(self):
 		return self.__mul__(-1)
 
 	def __add__(self, other):
-		if isinstance(other, Reverse):
-			z = Reverse(self.value + other.value)
+		if isinstance(other, Tensor):
+			z = Tensor(self.value + other.value)
 			self.children.append((1, z))
 			other.children.append((1, z))
 		else:
-			z = Reverse(self.value + other)
+			z = Tensor(self.value + other)
 			self.children.append((1, z))
 		return z
 
@@ -37,12 +41,12 @@ class Reverse:
 		return sub + other
 
 	def __mul__(self, other):
-		if isinstance(other, Reverse):
-			z = Reverse(self.value * other.value)
+		if isinstance(other, Tensor):
+			z = Tensor(self.value * other.value)
 			self.children.append((other.value, z))
 			other.children.append((self.value, z))
 		else:
-			z = Reverse(self.value*other)
+			z = Tensor(self.value*other)
 			self.children.append((other, z))
 		return z
 
@@ -50,44 +54,44 @@ class Reverse:
 		return self.__mul__(other)
 
 	def __truediv__(self, other):
-		if isinstance(other, Reverse):
-			z = Reverse(self.value / other.value)
+		if isinstance(other, Tensor):
+			z = Tensor(self.value / other.value)
 			self.children.append((1/other.value, z))
 			other.children.append((-self.value/other.value**2, z))
 		else:
-			z = Reverse(self.value / other)
+			z = Tensor(self.value / other)
 			self.children.append((1/other, z))
 		return z
 
 	def __rtruediv__(self, other):
-		if isinstance(other, Reverse):
-			z = Reverse(other.value / self.value)
+		if isinstance(other, Tensor):
+			z = Tensor(other.value / self.value)
 			self.children.append((-other.value/self.value**2, z))
 			other.children.append((1/self.value, z))
 		else:
-			z = Reverse(other / self.value)
+			z = Tensor(other / self.value)
 			self.children.append((-other/self.value**2, z))
 		return z
 
 	def __pow__(self, other):
-		if isinstance(other, Reverse):
-			z = Reverse(self.value**other.value)
+		if isinstance(other, Tensor):
+			z = Tensor(self.value**other.value)
 			self.children.append((other.value*self.value**(other.value-1), z))
 			other.children.append((self.value**other.value*np.log(self.value), z))
 		else:
-			z = Reverse(self.value**other)
+			z = Tensor(self.value**other)
 			self.children.append((other*self.value**(other-1), z))
 		return z
 
 	def __rpow__(self, other):
-		z = Reverse(other**self.value)
+		z = Tensor(other**self.value)
 		self.children.append((other**self.value*np.log(other), z))
 		return z
 
 # Elementary functions
 def _elementary_op(obj, fn, deriv_fn):
-	if isinstance(obj, Reverse):
-		z = Reverse(fn(obj.value))
+	if isinstance(obj, Tensor):
+		z = Tensor(fn(obj.value))
 		obj.children.append((deriv_fn(obj.value), z))
 		return z
 	else:
@@ -145,23 +149,3 @@ def sqrt(x):
 
 def cbrt(x):
 	return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x**(2/3)))
-
-
-# Simple test suite explaining how Reverse works
-#Initialization
-x = Reverse(0.5)
-y = Reverse(4.2)
-z = Reverse(3)
-f = x * y**3 + sin(x) - logistic(z)
-
-#set df seed to be 1
-f.grad_value = 1.0
-
-f_val = f.value
-x_val = x.value
-x_grad = x.get_grad()
-y_grad = y.get_grad()
-z_grad = z.get_grad()
-
-assert abs(f.value - (0.5*4.2**3+np.sin(0.5) - 1/(1+np.exp(-3)))) <= 1e-15
-assert abs(x.get_grad() - (4.2**3 + np.cos(0.5))) <= 1e-15
