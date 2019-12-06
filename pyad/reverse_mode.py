@@ -16,6 +16,9 @@ class Tensor:
 		    self.grad_value = sum(weight * var.grad for weight, var in self.children)
 		return self.grad_value
 
+	def __repr__(self):
+		return f'Tensor({self.value}, D({self.grad_value}))'
+
 	def __neg__(self):
 		return self.__mul__(-1)
 
