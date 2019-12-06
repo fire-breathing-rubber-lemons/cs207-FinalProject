@@ -20,13 +20,10 @@ class Tensor:
 		return self.__mul__(-1)
 
 	def __add__(self, other):
-		if isinstance(other, Tensor):
-			z = Tensor(self.value + other.value)
-			self.children.append((1, z))
-			other.children.append((1, z))
-		else:
-			z = Tensor(self.value + other)
-			self.children.append((1, z))
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		z = Tensor(self.value + other.value)
+		self.children.append((1.0, z))
+		other.children.append((1.0, z))
 		return z
 
 	def __radd__(self, other):
@@ -41,61 +38,48 @@ class Tensor:
 		return sub + other
 
 	def __mul__(self, other):
-		if isinstance(other, Tensor):
-			z = Tensor(self.value * other.value)
-			self.children.append((other.value, z))
-			other.children.append((self.value, z))
-		else:
-			z = Tensor(self.value*other)
-			self.children.append((other, z))
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		z = Tensor(self.value * other.value)
+		self.children.append((other.value, z))
+		other.children.append((self.value, z))
 		return z
 
 	def __rmul__(self, other):
 		return self.__mul__(other)
 
 	def __truediv__(self, other):
-		if isinstance(other, Tensor):
-			z = Tensor(self.value / other.value)
-			self.children.append((1/other.value, z))
-			other.children.append((-self.value/other.value**2, z))
-		else:
-			z = Tensor(self.value / other)
-			self.children.append((1/other, z))
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		z = Tensor(self.value / other.value)
+		self.children.append((1/other.value, z))
+		other.children.append((-self.value/other.value**2, z))
 		return z
 
 	def __rtruediv__(self, other):
-		if isinstance(other, Tensor):
-			z = Tensor(other.value / self.value)
-			self.children.append((-other.value/self.value**2, z))
-			other.children.append((1/self.value, z))
-		else:
-			z = Tensor(other / self.value)
-			self.children.append((-other/self.value**2, z))
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		z = Tensor(other.value / self.value)
+		self.children.append((-other.value/self.value**2, z))
+		other.children.append((1/self.value, z))
 		return z
 
 	def __pow__(self, other):
-		if isinstance(other, Tensor):
-			z = Tensor(self.value**other.value)
-			self.children.append((other.value*self.value**(other.value-1), z))
-			other.children.append((self.value**other.value*np.log(self.value), z))
-		else:
-			z = Tensor(self.value**other)
-			self.children.append((other*self.value**(other-1), z))
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		z = Tensor(self.value**other.value)
+		self.children.append((other.value*self.value**(other.value-1), z))
+		other.children.append((self.value**other.value*np.log(self.value), z))
 		return z
 
 	def __rpow__(self, other):
-		z = Tensor(other**self.value)
-		self.children.append((other**self.value*np.log(other), z))
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		z = Tensor(other.value**self.value)
+		self.children.append((other.value**self.value*np.log(other), z))
 		return z
 
 # Elementary functions
 def _elementary_op(obj, fn, deriv_fn):
-	if isinstance(obj, Tensor):
-		z = Tensor(fn(obj.value))
-		obj.children.append((deriv_fn(obj.value), z))
-		return z
-	else:
-		return fn(obj)
+	obj = obj if isinstance(obj, Tensor) else Tensor(obj)
+	z = Tensor(fn(obj.value))
+	obj.children.append((deriv_fn(obj.value), z))
+	return z
 
 def sin(x):
 	return _elementary_op(x, np.sin, np.cos)
