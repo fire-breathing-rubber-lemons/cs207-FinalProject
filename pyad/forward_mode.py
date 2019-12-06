@@ -610,7 +610,7 @@ def exp(tensor):
     Tensor: class
         Applies chain rule as appropriate and returns the resulting Tensor
     """
-    return _elementary_op(tensor, np.exp, np.exp)
+    return _elementary_op(tensor, np.exp, np.exp)   
 
 
 def log(tensor, base=np.e):
