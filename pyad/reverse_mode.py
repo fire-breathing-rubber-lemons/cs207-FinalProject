@@ -16,6 +16,35 @@ class Tensor:
 		    self.grad_value = sum(weight * var.grad for weight, var in self.children)
 		return self.grad_value
 
+	# Comparisons work like they do in numpy. Derivative information is ignored
+    # numpy arrays are returned by comparisons
+	def __lt__(self, other):
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		return self.value < other.value
+
+	def __gt__(self, other):
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		return self.value > other.value
+
+	def __le__(self, other):
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		return self.value <= other.value
+
+	def __ge__(self, other):
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		return self.value >= other.value
+
+	def __eq__(self, other):
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		return self.value == other.value
+
+	def __ne__(self, other):
+		other = other if isinstance(other, Tensor) else Tensor(other)
+		return self.value != other.value
+
+	def __bool__(self):
+		return bool(self.value)
+	
 	def __repr__(self):
 		return f'Tensor({self.value}, D({self.grad_value}))'
 
@@ -74,7 +103,7 @@ class Tensor:
 	def __rpow__(self, other):
 		other = other if isinstance(other, Tensor) else Tensor(other)
 		z = Tensor(other.value**self.value)
-		self.children.append((other.value**self.value*np.log(other), z))
+		self.children.append((other.value**self.value*np.log(other.value), z))
 		return z
 
 # Elementary functions
