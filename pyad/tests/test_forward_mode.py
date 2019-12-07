@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import pyad.forward_diff as fwd
+import pyad.forward_mode as fwd
 import pytest
 
 ################################
@@ -220,20 +220,45 @@ def test_norm_tensor_single_value():
     """
     Ensure the norm function correctly calculates euclidian norm
     """
-    test_tensor = fwd.Tensor(3)
-    norm_output = test_tensor.norm()
+    test_tensor = fwd.Variable('x', 2) + fwd.Variable('y', 3)
+    norm = test_tensor.norm()
 
-    assert norm_output == 3.0
+    assert norm.value == 5
+    assert norm.d['x'] == 1
+    assert norm.d['y'] == 1
 
 
 def test_norm_tensor_single_vector():
     """
     Ensure the norm function correctly calculates euclidian norm
     """
-    test_tensor = fwd.Tensor([2,2,1])
-    norm_output = test_tensor.norm()
+    test_tensor = fwd.Tensor([2, 2, 1]) * fwd.Variable('x', 4)
+    norm = test_tensor.norm()
 
-    assert norm_output == 3.0
+    assert norm.value == 12
+    assert norm.d['x'] == 3
+
+
+def test_sum():
+    """
+    Tests the sum function
+    """
+
+    # test sum of a vector
+    t = fwd.Tensor([1, 2, 3]) * fwd.var('x', 1) + fwd.var('y', 3)
+    res = t.sum()
+
+    assert res.value == 15
+    assert res.d['x'] == 6
+    assert res.d['y'] == 3
+
+    # test sum of a scalar
+    assert res.shape == ()
+
+    res = res.sum()
+    assert res.value == 15
+    assert res.d['x'] == 6
+    assert res.d['y'] == 3
 
 
 def test_repr():
@@ -318,6 +343,20 @@ def test_rpow():
     assert isinstance(res, fwd.Tensor)
     assert res.value == 64
     assert res.d.variables == {'x': 320 * math.log(4), 'y': 640 * math.log(4)}
+
+
+def test_logistic():
+    """
+    Tests the logistic function
+    """
+    t1 = fwd.Tensor(3, d=fwd.MultivariateDerivative({'x': 5, 'y': 10}))
+    res = fwd.logistic(t1)
+
+    expected_value = 1 / (1 + np.exp(-3))
+    expected_deriv = np.exp(3) / (np.exp(3) + 1) ** 2
+    assert math.isclose(res.value, expected_value, rel_tol=1e-12)
+    assert math.isclose(res.d['x'], 5 * expected_deriv, rel_tol=1e-12)
+    assert math.isclose(res.d['y'], 10 * expected_deriv, rel_tol=1e-12)
 
 
 #### Tests on the MultivariateDerivative Class ####
@@ -412,23 +451,26 @@ def test_comparisons():
     t2 = fwd.Tensor([4, 2, 3, 1, 10])
 
     # test against another Tensor
-    assert ((t1 < t2) == np.array([1, 0, 0, 0, 1])).all()
-    assert ((t1 > t2) == np.array([0, 1, 0, 1, 0])).all()
-    assert ((t1 <= t2) == np.array([1, 0, 1, 0, 1])).all()
-    assert ((t1 >= t2) == np.array([0, 1, 1, 1, 0])).all()
-    assert ((t1 == t2) == np.array([0, 0, 1, 0, 0])).all()
-    assert ((t1 != t2) == np.array([1, 1, 0, 1, 1])).all()
+    assert np.array_equal(t1 < t2, np.array([1, 0, 0, 0, 1]))
+    assert np.array_equal(t1 > t2, np.array([0, 1, 0, 1, 0]))
+    assert np.array_equal(t1 <= t2, np.array([1, 0, 1, 0, 1]))
+    assert np.array_equal(t1 >= t2, np.array([0, 1, 1, 1, 0]))
+    assert np.array_equal(t1 == t2, np.array([0, 0, 1, 0, 0]))
+    assert np.array_equal(t1 != t2, np.array([1, 1, 0, 1, 1]))
 
     # test against a non-Tensor
-    assert ((t1 < 3) == np.array([1, 0, 0, 0, 0])).all()
-    assert ((t1 > 3) == np.array([0, 1, 0, 1, 1])).all()
-    assert ((t1 <= 3) == np.array([1, 0, 1, 0, 0])).all()
-    assert ((t1 >= 3) == np.array([0, 1, 1, 1, 1])).all()
-    assert ((t1 == 3) == np.array([0, 0, 1, 0, 0])).all()
-    assert ((t1 != 3) == np.array([1, 1, 0, 1, 1])).all()
+    assert np.array_equal(t1 < 3, np.array([1, 0, 0, 0, 0]))
+    assert np.array_equal(t1 > 3, np.array([0, 1, 0, 1, 1]))
+    assert np.array_equal(t1 <= 3, np.array([1, 0, 1, 0, 0]))
+    assert np.array_equal(t1 >= 3, np.array([0, 1, 1, 1, 1]))
+    assert np.array_equal(t1 == 3, np.array([0, 0, 1, 0, 0]))
+    assert np.array_equal(t1 != 3, np.array([1, 1, 0, 1, 1]))
 
 
 def test_any_all():
+    """
+    Tests the any() and all() methods
+    """
     t1 = fwd.Tensor([0, 0, 0])
     assert t1.any() is False
     assert t1.all() is False
@@ -463,3 +505,243 @@ def test_bool():
 
     with pytest.raises(ValueError):
         bool(t2)
+
+
+### Tests for vector operations ###
+def test_simple_vector_arithmetic():
+    """
+    Tests simple arithmetic (add/sub/mul/div) for vectors
+    """
+    v1 = fwd.var('x', 5)
+    v2 = fwd.var('y', 10)
+
+    t1 = fwd.Tensor([1, 2, 3])
+    t2 = fwd.Tensor([5, 6, 7])
+    res = t1*v1 - t2*v2
+
+    assert np.array_equal(res.value, np.array([-45, -50, -55]))
+    assert np.array_equal(res.d['x'], np.array([1, 2, 3]))
+    assert np.array_equal(res.d['y'], np.array([-5, -6, -7]))
+
+    res = 5 + (res * res * res) / res
+    assert np.array_equal(res.value, np.array([2030, 2505, 3030]))
+    assert np.array_equal(res.d['x'], np.array([-90, -200, -330]))
+    assert np.array_equal(res.d['y'], np.array([450, 600, 770]))
+
+
+def test_scalar_var_getitem():
+    """
+    Tests indexing into a Tensor with scalar variables
+    """
+
+    v1 = fwd.var('x', 5)
+    v2 = fwd.var('y', 10)
+
+    t1 = fwd.Tensor([1, 2, 3])
+    t2 = fwd.Tensor([5, 6, 7])
+
+    res = t1*v1 - t2*v2
+    res = 5 + (res * res * res) / res
+
+    assert isinstance(res[0], fwd.Tensor)
+    assert res[0].value == 2030
+    assert res[0].d['x'] == -90
+    assert res[0].d['y'] == 450
+
+    assert isinstance(res[1], fwd.Tensor)
+    assert res[1].value == 2505
+    assert res[1].d['x'] == -200
+    assert res[1].d['y'] == 600
+
+    assert isinstance(res[2], fwd.Tensor)
+    assert res[2].value == 3030
+    assert res[2].d['x'] == -330
+    assert res[2].d['y'] == 770
+
+    assert isinstance(res[0:2], fwd.Tensor)
+    assert np.array_equal(res[0:2].value, np.array([2030, 2505]))
+    assert np.array_equal(res[0:2].d['x'], np.array([-90, -200]))
+    assert np.array_equal(res[0:2].d['y'], np.array([450, 600]))
+
+    assert isinstance(res[[0, 2]], fwd.Tensor)
+    assert np.array_equal(res[[0, 2]].value, np.array([2030, 3030]))
+    assert np.array_equal(res[[0, 2]].d['x'], np.array([-90, -330]))
+    assert np.array_equal(res[[0, 2]].d['y'], np.array([450, 770]))
+
+
+def test_scalar_var_setitem():
+    """
+    Tests setting indexes in a Tensor with scalar variables
+    """
+    v1 = fwd.var('x', 5)
+    v2 = fwd.var('y', 10)
+    v3 = fwd.var('z', 5)
+
+    t = fwd.Tensor([1, 2, 3, 4]) * v1 + v2 - 2 * v3
+
+    assert np.array_equal(t.value, np.array([5, 10, 15, 20]))
+    assert np.array_equal(t.d['x'], np.array([1, 2, 3, 4]))
+    assert np.array_equal(t.d['y'], np.array([1, 1, 1, 1]))
+    assert np.array_equal(t.d['z'], np.array([-2, -2, -2, -2]))
+
+    t[0] = t[1]
+    assert np.array_equal(t.value, np.array([10, 10, 15, 20]))
+    assert np.array_equal(t.d['x'], np.array([2, 2, 3, 4]))
+    assert np.array_equal(t.d['y'], np.array([1, 1, 1, 1]))
+    assert np.array_equal(t.d['z'], np.array([-2, -2, -2, -2]))
+
+    t[1:3] = t[3]
+    assert np.array_equal(t.value, np.array([10, 20, 20, 20]))
+    assert np.array_equal(t.d['x'], np.array([2, 4, 4, 4]))
+    assert np.array_equal(t.d['y'], np.array([1, 1, 1, 1]))
+    assert np.array_equal(t.d['z'], np.array([-2, -2, -2, -2]))
+
+    # adding a variable that previously wasn't there
+    t[0] = fwd.var('q', 100)
+    assert np.array_equal(t.value, np.array([100, 20, 20, 20]))
+    assert np.array_equal(t.d['x'], np.array([0, 4, 4, 4]))
+    assert np.array_equal(t.d['y'], np.array([0, 1, 1, 1]))
+    assert np.array_equal(t.d['z'], np.array([0, -2, -2, -2]))
+    assert np.array_equal(t.d['q'], np.array([1, 0, 0, 0]))
+
+
+def test_vector_var():
+    """
+    Basic arithmetic tests for vector variables
+    """
+    v1 = fwd.var('x', [1, 2, 3])
+    v2 = fwd.var('y', [2, 3, 4])
+
+    assert np.array_equal(v1.d['x'], np.eye(3))
+    assert np.array_equal(v2.d['y'], np.eye(3))
+
+    res = (v1 + 1) * (v2 + 1)
+    assert np.array_equal(res.d['x'], np.diag([3, 4, 5]))
+    assert np.array_equal(res.d['y'], np.diag([2, 3, 4]))
+
+    # try out invalid variable declarations
+    with pytest.raises(ValueError):
+        fwd.var('x', [])
+
+    with pytest.raises(ValueError):
+        fwd.var('x', np.ones((2, 2)))
+
+
+def test_vector_var_getitem():
+    """
+    Tests getting indexes in a Tensor with vector variables
+    """
+    v1 = fwd.var('x', [1, 2, 3])
+    v2 = fwd.var('y', [2, 3, 4])
+    res = 6 * (v1 + 1) / (v2 - 1)
+
+    assert np.array_equal(res.value, np.array([12, 9, 8]))
+    assert np.array_equal(res.d['x'], np.diag([6, 3, 2]))
+    assert np.array_equal(res.d['y'], np.diag([-12, -9/2, -8/3]))
+
+    assert np.array_equal(res[0].value, 12)
+    assert np.array_equal(res[0].d['x'], np.array([6, 0, 0]))
+    assert np.array_equal(res[0].d['y'], np.array([-12, 0, 0]))
+
+    assert np.array_equal(res[1].value, 9)
+    assert np.array_equal(res[1].d['x'], np.array([0, 3, 0]))
+    assert np.array_equal(res[1].d['y'], np.array([0, -9/2, 0]))
+
+    assert np.array_equal(res[2].value, 8)
+    assert np.array_equal(res[2].d['x'], np.array([0, 0, 2]))
+    assert np.array_equal(res[2].d['y'], np.array([0, 0, -8/3]))
+
+
+def test_vector_var_setitem():
+    """
+    Tests setting indexes in a Tensor with vector variables
+    """
+    v1 = fwd.var('x', [1, 2, 3])
+    v2 = fwd.var('y', [2, 3, 4])
+    res = 2 * v1 * v2
+
+    res[0] += res[1] + res[2] / 2
+    assert np.array_equal(res.value, [28, 12, 24])
+    assert np.array_equal(res.d['x'], [[4, 6, 4], [0, 6, 0], [0, 0, 8]])
+    assert np.array_equal(res.d['y'], [[2, 4, 3], [0, 4, 0], [0, 0, 6]])
+
+
+def test_shape_and_len():
+    """
+    Tests len() and .shape of a Tensor
+    """
+    v1 = fwd.Tensor(0)
+    assert v1.shape == ()
+    with pytest.raises(TypeError):
+        len(v1)
+
+    v2 = fwd.Tensor([0])
+    assert v2.shape == (1,)
+    assert len(v2) == 1
+
+    v3 = fwd.Tensor([0, 1, 2, 3])
+    assert v3.shape == (4,)
+    assert len(v3) == 4
+
+    v4 = fwd.Tensor([[1, 2, 3], [4, 5, 6]])
+    assert v4.shape == (2, 3)
+    assert len(v4) == 2
+
+
+def test_iter():
+    """
+    Tests iterating over a Tensor
+    """
+    v1 = fwd.Tensor(0)
+    with pytest.raises(TypeError):
+        iter(v1)
+
+    v2 = fwd.Tensor([0, 1], d=fwd.MultivariateDerivative({'x': [1, 2], 'y': [3, 4]}))
+    res = []
+    for x in v2:
+        res.append(x)
+
+    assert res[0].value == 0
+    assert res[0].d['x'] == 1
+    assert res[0].d['y'] == 3
+
+    assert res[1].value == 1
+    assert res[1].d['x'] == 2
+    assert res[1].d['y'] == 4
+
+
+def test_stack():
+    """
+    Tests for stacking Tensors
+    """
+
+    # stack with scalar variables
+    t1 = fwd.Tensor([1, 2, 3]) * fwd.var('x', 2)
+    t2 = fwd.Tensor([4, 5, 6]) * fwd.var('y', 3)
+
+    res = fwd.stack([t1, t2])
+    assert np.array_equal(res.value, np.array([[2, 4, 6], [12, 15, 18]]))
+    assert np.array_equal(res.d['x'], np.array([[1, 2, 3], [0, 0, 0]]))
+    assert np.array_equal(res.d['y'], np.array([[0, 0, 0], [4, 5, 6]]))
+
+    # stack with vector variables
+    t1 = fwd.Tensor([2, 3, 4]) * fwd.var('x', [1, 2, 3])
+    t2 = fwd.Tensor([5, 6, 7]) * fwd.var('y', [4, 5, 6])
+
+    res = fwd.stack([t1.sum(), t2.sum()])
+    assert np.array_equal(res.value, np.array([20, 92]))
+    assert np.array_equal(res.d['x'], [[2, 3, 4], [0, 0, 0]])
+    assert np.array_equal(res.d['y'], [[0, 0, 0], [5, 6, 7]])
+
+    res = res + fwd.var('a', 1)
+    res = res * fwd.var('b', [3, 4])
+    assert np.array_equal(res.d['a'], [3, 4])
+    assert np.array_equal(res.d['b'], [[21, 0], [0, 93]])
+
+    # test stack of an empty list
+    with pytest.raises(ValueError):
+        fwd.stack([])
+
+    # test stack with inconsistent shapes
+    with pytest.raises(ValueError):
+        fwd.stack([fwd.var('x', 1), fwd.var('x', [1, 2, 3])])
