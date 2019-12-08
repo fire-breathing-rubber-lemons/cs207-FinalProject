@@ -42,7 +42,7 @@ class NeuralNet:
         self.params["b_out"] = fwd.var("b_out",np.random.rand(1)[0])     
         return self.params
         
-    def forward_pass(self,X,y):
+    def get_output(self,X):
         #dictionary of dictionaries to hold nodes of each hidden layer 
         h_dict={}
         for l in range(self.numhl):
@@ -75,8 +75,12 @@ class NeuralNet:
                 out+=h_dict[self.numhl][name]*self.params["w_out"+str(k+1)]
         out+=self.params["b_out"]
         #use linear activation for final node for regression
-        #out=fwd.logistic(out)       
-        loss = (y-out)**2
+        #out=fwd.logistic(out)               
+        return out
+    
+    def forward_pass(self,X,y):
+        out=self.get_output(X)
+        loss = fwd.abs(y-out)**2
         return loss
     
     def update_weights(self,loss,alpha=.1):
@@ -109,7 +113,16 @@ class NeuralNet:
             loss=self.forward_pass(X_obs,y_obs)
             loss_list.append(loss.value) 
         return(sum(loss_list)/len(loss_list))
-                
+
+    def predict(self,X):  
+        pred_list=[]
+        n_obs=np.shape(X)[0]
+        for i in range(n_obs):
+            X_obs=X[i,]
+            output=self.get_output(X_obs)
+            pred_list.append(output.value) 
+        return(pred_list)     
+               
 #Test on some synthetic data generated from model y=2*x1+3*x2+noise
 np.random.seed(123)
 X=np.random.rand(50,2)
@@ -133,5 +146,8 @@ testnn.train(50,X,y,v=True)
 print("post-training loss on train data: ",testnn.score(X,y))
 print("post-training loss on test data: ",testnn.score(X_test,y_test))   
 
+predictions=testnn.predict(X_test)
+for i in range(X_test.shape[0]):
+    print("pred: ",predictions[i]," actual: ",y_test[i])
 
 
