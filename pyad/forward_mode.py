@@ -610,7 +610,7 @@ def exp(tensor):
     Tensor: class
         Applies chain rule as appropriate and returns the resulting Tensor
     """
-    return _elementary_op(tensor, np.exp, np.exp)   
+    return _elementary_op(tensor, np.exp, np.exp)
 
 
 def log(tensor, base=np.e):
@@ -624,15 +624,17 @@ def log(tensor, base=np.e):
         The value of the variable or constant which the natural logarithm is
         being differentiated at
 
-    base: float
-        The base of the logarithm. Defaults to np.e.
+    base: number
+        The base of the logarithm. Defaults to `np.e`. Can be a Tensor
 
     Returns
     -------
     Tensor: class
         Applies chain rule as appropriate and returns the resulting Tensor
     """
-    return _elementary_op(tensor, np.log, lambda x: 1 / x) / np.log(base)
+    if base == np.e:
+        return _elementary_op(tensor, np.log, lambda x: 1 / x)
+    return log(tensor) / log(base)
 
 
 def log2(tensor):
