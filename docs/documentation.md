@@ -180,7 +180,7 @@ plot = rev_g.plot_graph([x,y,z])
 
 plt.show()
 ```
-<img src=reverse_graph.png width="300">
+<img src=reverse_graph.png width="600">
 
 
 ## Software Organization
