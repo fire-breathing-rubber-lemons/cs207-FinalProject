@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Tensor:
 
 	def __init__(self, value):
@@ -106,62 +107,78 @@ class Tensor:
 		self.children.append((other.value**self.value*np.log(other.value), z))
 		return z
 
+
 # Elementary functions
 def _elementary_op(obj, fn, deriv_fn):
-	obj = obj if isinstance(obj, Tensor) else Tensor(obj)
-	z = Tensor(fn(obj.value))
-	obj.children.append((deriv_fn(obj.value), z))
-	return z
+    obj = obj if isinstance(obj, Tensor) else Tensor(obj)
+    z = Tensor(fn(obj.value))
+    obj.children.append((deriv_fn(obj.value), z))
+    return z
+
 
 def sin(x):
-	return _elementary_op(x, np.sin, np.cos)
+    return _elementary_op(x, np.sin, np.cos)
+
 
 def cos(x):
-	return _elementary_op(x, np.cos, lambda x: -np.sin(x))
+    return _elementary_op(x, np.cos, lambda x: -np.sin(x))
+
 
 def tan(x):
-	return _elementary_op(x, np.tan, lambda x: 1 / (np.cos(x) ** 2))
+    return _elementary_op(x, np.tan, lambda x: 1 / (np.cos(x) ** 2))
+
 
 def arcsin(x):
-	return _elementary_op(x, np.arcsin, lambda x: 1 / np.sqrt(1 - x ** 2))
+    return _elementary_op(x, np.arcsin, lambda x: 1 / np.sqrt(1 - x ** 2))
+
 
 def arccos(x):
-	return _elementary_op(x, np.arccos, lambda x: -1 / np.sqrt(1 - x ** 2))
+    return _elementary_op(x, np.arccos, lambda x: -1 / np.sqrt(1 - x ** 2))
+
 
 def arctan(x):
-	return _elementary_op(x, np.arctan, lambda x: 1 / (1 + x ** 2))
+    return _elementary_op(x, np.arctan, lambda x: 1 / (1 + x ** 2))
+
 
 def sinh(x):
-	return _elementary_op(x, np.sinh, np.cosh)
+    return _elementary_op(x, np.sinh, np.cosh)
+
 
 def cosh(x):
-	return _elementary_op(x, np.cosh, np.sinh)
+    return _elementary_op(x, np.cosh, np.sinh)
+
 
 def tanh(x):
-	return _elementary_op(x, np.tanh, lambda x: 1/(np.cosh(x)**2))
+    return _elementary_op(x, np.tanh, lambda x: 1/(np.cosh(x)**2))
+
 
 def abs(x):
-	return _elementary_op(x, np.abs, np.sign)
+    return _elementary_op(x, np.abs, np.sign)
+
 
 def exp(x):
-	return _elementary_op(x, np.exp, np.exp)
+    return _elementary_op(x, np.exp, np.exp)
+
 
 def logistic(x):
-	f = lambda x: 1/(1+np.exp(-x))
-	df = lambda x: np.exp(-x)/(1+np.exp(-x))**2
-	return _elementary_op(x, f, df)
+    return 1 / (1 + exp(-x))
 
-def log(x, base = np.e):
-	return _elementary_op(x, np.log, lambda x: 1 / x) / np.log(base)
+
+def log(x, base=np.e):
+    return _elementary_op(x, np.log, lambda x: 1 / x) / np.log(base)
+
 
 def log2(x):
-	return log(x, base = 2)
+    return log(x, base=2)
+
 
 def log10(x):
-	return log(x, base = 10)
+    return log(x, base=10)
+
 
 def sqrt(x):
-	return _elementary_op(x, np.sqrt, lambda x: 1 / (2 * np.sqrt(x)))
+    return _elementary_op(x, np.sqrt, lambda x: 1 / (2 * np.sqrt(x)))
+
 
 def cbrt(x):
-	return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x**(2/3)))
+    return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x**(2/3)))
