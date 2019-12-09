@@ -260,18 +260,18 @@ class rev_graph:
             key_formatted = (key[0], key[1])
             labels_dict[key_formatted] = value
 
-        plt.figure(figsize=(10,10))
+        _, graph = plt.subplots(figsize=(10,10))
         G = nx.DiGraph()
         G.add_edges_from(edges)
-        pos = nx.spring_layout(G, iterations=500, k=1)
+        pos = nx.spring_layout(G, iterations=500)
         nx.draw_networkx_edge_labels(G, pos, edge_labels=labels_dict, label_pos=0.5)
-        nx.draw_networkx(G, pos, with_labels=False, node_size = 200)
+        nx.draw_networkx(G, pos, with_labels=False, node_size = 200, ax = graph)
 
         for k,v in pos.items():
             x,y=v
-            plt.text(x+0.01,y+0.03,s=k)
+            graph.text(x+0.01,y+0.03,s=k)
         
-        plt.show()
+        return graph
         
 
         
