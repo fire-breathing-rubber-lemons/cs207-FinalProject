@@ -35,9 +35,9 @@ class Tensor:
             raise Exception('Cannot call .backward() on a non-scalar')
         self.grad_value = np.array(1.0)
 
-    def add_child(self, weight, output_tensor):
+    def add_child(self, weight, output_tensor, symbol):
         if not Tensor._gradients_disabled:
-            self.children.append((weight, output_tensor))
+            self.children.append((weight, output_tensor, symbol))
 
     @property
     def grad(self):
@@ -46,7 +46,7 @@ class Tensor:
         """
         if self.grad_value is None:
             self.grad_value = np.array(0.0)
-            for weight, node in self.children:
+            for weight, node, _ in self.children:
                 if callable(weight):
                     update = weight(node.grad)
                 else:
@@ -108,7 +108,7 @@ class Tensor:
 
     def sum(self):
         z = Tensor(np.sum(self.value))
-        self.add_child(np.ones(self.shape), z)
+        self.add_child(np.ones(self.shape), z, '+')
         return z
 
     def mean(self):
@@ -129,7 +129,7 @@ class Tensor:
                 result[i] *= backward_prod[i + 1]
 
         z = Tensor(np.prod(self.value))
-        self.add_child(result.reshape(self.shape), z)
+        self.add_child(result.reshape(self.shape), z, 'prod')
         return z
 
     def __neg__(self):
@@ -138,8 +138,8 @@ class Tensor:
     def __add__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value + other.value)
-        self.add_child(1.0, z)
-        other.add_child(1.0, z)
+        self.add_child(1.0, z, '+')
+        other.add_child(1.0, z, '+')
         return z
 
     def __radd__(self, other):
@@ -154,8 +154,8 @@ class Tensor:
     def __mul__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value * other.value)
-        self.add_child(other.value, z)
-        other.add_child(self.value, z)
+        self.add_child(other.value, z, '*')
+        other.add_child(self.value, z, '*')
         return z
 
     def __rmul__(self, other):
@@ -164,8 +164,8 @@ class Tensor:
     def __truediv__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value / other.value)
-        self.add_child(1 / other.value, z)
-        other.add_child(-self.value / other.value**2, z)
+        self.add_child(1 / other.value, z, '/')
+        other.add_child(-self.value / other.value**2, z, '/')
         return z
 
     def __rtruediv__(self, other):
@@ -176,8 +176,8 @@ class Tensor:
     def __pow__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value ** other.value)
-        self.add_child(other.value * self.value**(other.value - 1), z)
-        other.add_child(self.value**other.value * np.log(self.value), z)
+        self.add_child(other.value * self.value**(other.value - 1), z, 'power')
+        other.add_child(self.value**other.value * np.log(self.value), z, 'power')
         return z
 
     def __rpow__(self, other):
@@ -206,8 +206,8 @@ class Tensor:
             return (self_mat.T @ out_grad_mat).reshape(other.value.shape)
 
         z = Tensor(self.value @ other.value)
-        self.add_child(mm_backward_self, z)
-        other.add_child(mm_backward_other, z)
+        self.add_child(mm_backward_self, z, 'matmul')
+        other.add_child(mm_backward_other, z, 'matmul')
         return z
 
     def __rmatmul__(self, other):
@@ -216,7 +216,7 @@ class Tensor:
 
     def __getitem__(self, idx):
         z = Tensor(self.value[idx])
-        self.add_child(1, z)
+        self.add_child(1, z, 'getitem')
         return z
 
     def __setitem__(self, idx, value):
@@ -234,7 +234,7 @@ class no_grad:
 
 # Elementary functions
 @runtime_warning_filter
-def _elementary_op(obj, fn, deriv_fn):
+def _elementary_op(obj, fn, deriv_fn, symbol):
     """
     A generic framework to allow for the chain rule of other elementary
     functions taken from the numpy module.
@@ -254,7 +254,7 @@ def _elementary_op(obj, fn, deriv_fn):
     """
     obj = obj if isinstance(obj, Tensor) else Tensor(obj)
     z = Tensor(fn(obj.value))
-    obj.add_child(deriv_fn(obj.value), z)
+    obj.add_child(deriv_fn(obj.value), z, symbol)
     return z
 
 
@@ -291,7 +291,7 @@ def cosh(x):
 
 
 def tanh(x):
-    return _elementary_op(x, np.tanh, lambda x: 1 / (np.cosh(x) ** 2))
+    return _elementary_op(x, np.tanh, lambda x: 1 / (np.cosh(x) ** 2), 'tanh')
 
 
 def abs(x):
@@ -310,7 +310,7 @@ def logistic(x):
 
 def log(x, base=np.e):
     if base == np.e:
-        return _elementary_op(x, np.log, lambda x: 1 / x)
+        return _elementary_op(x, np.log, lambda x: 1 / x, 'log')
     return log(x) / log(base)
 
 
@@ -327,7 +327,7 @@ def sqrt(x):
 
 
 def cbrt(x):
-    return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x ** (2/3)))
+    return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x ** (2/3)), 'cbrt')
 
 # Graph mode
 class rev_graph:
@@ -408,7 +408,7 @@ class rev_graph:
             key_formatted = (key[0], key[1])
             labels_dict[key_formatted] = value
 
-        _, graph = plt.subplots(figsize=(10,10))
+        _, graph = plt.subplots()
         G = nx.DiGraph()
         G.add_edges_from(edges)
         pos = nx.spring_layout(G, iterations=500)
