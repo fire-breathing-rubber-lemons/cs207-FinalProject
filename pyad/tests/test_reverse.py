@@ -44,6 +44,7 @@ def test_case_base_trigonometric():
     assert math.isclose(y.grad, true_y_deriv, rel_tol=1e-12)
     assert math.isclose(z.grad, true_z_deriv, rel_tol=1e-12)
 
+
 def test_case_base_inversetrig():
     """
     Testing inverse trig functions
@@ -223,13 +224,19 @@ def test_children_Tensor():
 
 
 def test_backward_Tensor():
+    """
+    Makes sure that the .backward() seed is set correct
+    """
     x = rev.Tensor(3)
-
-    assert(x.grad_value == None)
+    assert x.grad_value is None
 
     x.backward()
+    assert x.grad_value == 1
 
-    assert(x.grad_value == 1)
+    # make sure you can't call .backward() on a non-scalar
+    y = x * [1, 2, 3]
+    with pytest.raises(ValueError):
+        y.backward()
 
 
 def test_repr():
@@ -240,8 +247,8 @@ def test_repr():
     test_tensor2 = rev.Tensor(2)
     test_tensor2.backward()
 
-    assert test_tensor.__repr__() == 'Tensor(3, D(None))'
-    assert test_tensor2.__repr__() == 'Tensor(2, D(1.0))'
+    assert test_tensor.__repr__() == 'Tensor(3.0, D(None))'
+    assert test_tensor2.__repr__() == 'Tensor(2.0, D(1.0))'
 
 
 def test_neg():
@@ -270,6 +277,7 @@ def test_add():
     assert test_tensor2.grad == 1.0
     assert test_tensor1.children[0][1] == new_tensor
     assert test_tensor2.children[0][1] == new_tensor
+
 
 def test_radd():
     """
@@ -324,7 +332,7 @@ def test_truedriv():
     res.backward()
 
     assert isinstance(res, rev.Tensor)
-    assert res.value == 3/2    
+    assert res.value == 3/2
     assert t1.grad == 1/2
     assert t2.grad == -3/4
     assert t1.children[0][1].value == res.value
@@ -359,7 +367,6 @@ def test_pow():
     assert t1.children[0][1].value == res.value
 
 
-
 def test_rpow():
     """
     Take a non-tensor to the power of a tensor
@@ -388,7 +395,7 @@ def test_logistic():
 
     assert math.isclose(res.value, expected_value, rel_tol=1e-12)
     assert math.isclose(t1.grad, expected_deriv, rel_tol=1e-12)
-    
+
 
 def test_loge():
     """
@@ -418,13 +425,14 @@ def test_comparisons():
     t4 = rev.Tensor(3)
 
     # test against another Tensor
-    assert  t1 == t2
-    assert  t1 <= t2
-    assert  t1 >= t2
-    assert  t3 < t1
-    assert  t3 <= t1
-    assert  t4 > t1
-    assert  t4 >= t1
+    assert t1 == t2
+    assert t1 <= t2
+    assert t1 >= t2
+    assert t3 < t1
+    assert t3 <= t1
+    assert t4 > t1
+    assert t4 >= t1
+    assert t1 != t3
 
     # test against a non-Tensor
     assert t1 == 2
@@ -432,6 +440,7 @@ def test_comparisons():
     assert t1 >= 2
     assert t1 < 3
     assert t1 > 1
+    assert t1 != 0
 
 
 def test_bool():
@@ -445,3 +454,205 @@ def test_bool():
     assert bool(t0) is False
     assert bool(t1) is True
     assert bool(t2) is True
+
+
+def test_tensor_build():
+    """
+    Test Tensor init
+    """
+
+    # Check that you can build a Tensor from another Tensor
+    t0 = rev.Tensor([1, 2, 3])
+    t1 = t0 * t0
+    res = t1.sum()
+    res.backward()
+
+    assert np.allclose(t0.grad, [2, 4, 6])
+    assert t0.children != []
+    assert t0.grad_value is not None
+
+    s0 = rev.Tensor(t0)
+    assert s0.grad_value is None
+    assert s0.children == []
+
+    # Check that you can't build a > 2D tensor
+    with pytest.raises(ValueError):
+        rev.Tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+
+
+def test_matmul():
+    """
+    Test matrix multiplication functionality
+    """
+
+    # test matrix x matrix
+    t0 = rev.Tensor([[1, 2], [3, 4]])
+    t1 = rev.Tensor([[5, 6], [7, 8]])
+    t2 = rev.Tensor([[9, 10], [11, 12]])
+    res = (t0 @ t1 @ t2).sum()
+
+    res.backward()
+
+    assert res.value == 2834
+    assert np.allclose(t0.grad, [[233, 317], [233, 317]])
+    assert np.allclose(t1.grad, [[76, 92], [114, 138]])
+    assert np.allclose(t2.grad, [[62, 62], [72, 72]])
+
+    # test matrix x vector
+    t0 = rev.Tensor([[1, 2], [3, 4]])
+    t1 = rev.Tensor([5, 6])
+    res = (t0 @ t1).sum()
+
+    res.backward()
+
+    assert res.value == 56
+    assert np.allclose(t0.grad, [[5, 6], [5, 6]])
+    assert np.allclose(t1.grad, [4, 6])
+
+    # test __rmatmul__
+    t0 = [[1, 2], [3, 4]]
+    t1 = rev.Tensor([5, 6])
+    res = (t0 @ t1).sum()
+
+    res.backward()
+    assert res.value == 56
+    assert np.allclose(t1.grad, [4, 6])
+
+
+def test_broadcast():
+    """
+    Test gradients when broadcasting
+    """
+
+    t0 = rev.Tensor([[1], [2]])        # a 2 x 1 matrix
+    t1 = rev.Tensor([[5, 6], [6, 7]])  # a 2 x 2 matrix
+    res = (t0 * t1).sum()
+
+    res.backward()
+
+    assert res.value == 37
+    assert np.allclose(t0.grad, [[11], [13]])
+    assert np.allclose(t1.grad, [[1, 1], [2, 2]])
+
+
+def test_reset_grad():
+    """
+    Test out reset_grad()
+    """
+    t0 = rev.Tensor(10)
+    t1 = rev.Tensor(20)
+
+    res = t0 * t1
+    res.backward()
+
+    assert t0.grad == 20
+    assert t0.grad_value == 20
+    assert t0.children != []
+
+    assert t1.grad == 10
+    assert t1.grad_value == 10
+    assert t1.children != []
+
+    t0.reset_grad()
+    t1.reset_grad()
+
+    assert t0.grad_value is None
+    assert t0.children == []
+
+    assert t1.grad_value is None
+    assert t1.children == []
+
+
+def test_aggregates():
+    """
+    Test out aggregates. Sums, products, means
+    """
+
+    # test aggregates for vectors
+    t0 = rev.Tensor([3, 5, 7])
+
+    res = t0.sum()
+    res.backward()
+    assert res.value == 15
+    assert np.allclose(t0.grad, [1, 1, 1])
+
+    t0.reset_grad()
+    res = t0.mean()
+    res.backward()
+    assert res.value == 5
+    assert np.allclose(t0.grad, [1/3, 1/3, 1/3])
+
+    t0.reset_grad()
+    res = t0.prod()
+    res.backward()
+    assert res.value == 105
+    assert np.allclose(t0.grad, [35, 21, 15])
+
+    # test aggregates for scalars
+    t1 = rev.Tensor(5)
+
+    res = t1.sum()
+    res.backward()
+    assert res.value == 5
+    assert t1.grad == 1
+
+    t1.reset_grad()
+    res = t1.mean()
+    res.backward()
+    assert res.value == 5
+    assert t1.grad == 1
+
+    t1.reset_grad()
+    res = t1.prod()
+    res.backward()
+    assert res.value == 5
+    assert t1.grad == 1
+
+
+def test_no_grad():
+    """
+    Check that the computational graph is not built while no_grad() is active
+    """
+    t0 = rev.Tensor(5)
+    t1 = t0 * t0
+    assert t0.children != []
+
+    with rev.no_grad():
+        t0 = rev.Tensor(5)
+        t1 = t0 * t0
+        assert t0.children == []
+
+
+def test_get_set_item():
+    """
+    Test getting items in a Tensor
+    """
+    t0 = rev.Tensor([[1, 2, 3, 4], [5, 6, 7, 8]])
+    s1 = t0[0, :]
+    s2 = t0[1, :]
+    res = (s1 * s2).sum()
+
+    res.backward()
+    assert np.allclose(s1.value, [1, 2, 3, 4])
+    assert np.allclose(s2.value, [5, 6, 7, 8])
+
+    assert res.value == 70
+    assert np.allclose(s1.grad, [5, 6, 7, 8])
+    assert np.allclose(s2.grad, [1, 2, 3, 4])
+    assert np.allclose(t0.grad, [[5, 6, 7, 8], [1, 2, 3, 4]])
+
+
+def test_set_item():
+    """
+    Test setting items in a Tensor
+    """
+    t0 = rev.Tensor([[1, 1, 1], [1, 1, 1]])
+    s1 = rev.Tensor([1000, 2])
+    t0[0, 1:3] = s1
+
+    res = t0.prod()
+    res.backward()
+
+    assert res.value == 2000
+    assert np.allclose(t0.grad, [[2000, 2, 1000], [2000, 2000, 2000]])
+    assert np.allclose(s1.grad, [2, 1000])

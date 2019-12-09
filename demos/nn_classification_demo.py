@@ -11,13 +11,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 nn = NeuralNet(loss_fn='cross_entropy')
-nn.add_layer(X_train.shape[1], 1000, activation='logistic')
-nn.add_layer(1000, 1000, activation='linear')
-nn.add_layer(1000, 1 + np.max(y_train), activation='log_softmax')
+nn.add_layer(X_train.shape[1], 500, activation='linear')
+nn.add_layer(500, 500, activation='logistic')
+nn.add_layer(500, 1 + np.max(y_train), activation='linear')
 
 nn.train(
     X_train, y_train, X_test, y_test,
-    learning_rate=1e-4, epochs=20
+    learning_rate=1e-4, epochs=50
 )
 
 
