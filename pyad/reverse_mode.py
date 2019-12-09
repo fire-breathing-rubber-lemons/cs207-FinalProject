@@ -228,7 +228,7 @@ class Tensor:
             return out_grad[idx]
 
         other = other if isinstance(other, Tensor) else Tensor(other)
-        other.add_child(setitem_backward, self)
+        other.add_child(setitem_backward, self, 'setitem')
         self.value[idx] = other.value
         return self
 
