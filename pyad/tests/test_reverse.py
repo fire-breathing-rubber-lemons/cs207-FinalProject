@@ -266,9 +266,10 @@ def test_add():
 
     assert type(new_tensor) == rev.Tensor
     assert new_tensor.value == 8
-    assert test_tensor1.children[0] == (1.0, new_tensor)
-    assert test_tensor2.children[0] == (1.0, new_tensor)
-
+    assert test_tensor1.grad == 1.0
+    assert test_tensor2.grad == 1.0
+    assert test_tensor1.children[0][1] == new_tensor
+    assert test_tensor2.children[0][1] == new_tensor
 
 def test_radd():
     """
@@ -280,7 +281,8 @@ def test_radd():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 8
-    assert t1.children[0] == (1.0, res)
+    assert t1.grad == 1.0
+    assert t1.children[0][1] == res
 
 
 def test_sub():
@@ -294,8 +296,7 @@ def test_sub():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 2
-    assert t1.children[0] == (1.0, res)
-    assert t2.children[0][0] == -t2.value
+    assert t2.grad == -t2.value
     assert t2.children[0][1].value == t2.__neg__().value
 
 
@@ -309,7 +310,7 @@ def test_rsub():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 2
-    assert t1.children[0][0] == -1
+    assert t1.grad == -1
     assert t1.children[0][1].value == t1.__neg__().value
 
 
@@ -324,8 +325,10 @@ def test_truedriv():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 3/2    
-    assert t1.children[0][0] == 1/2
-    assert t2.children[0][0] == -3/4
+    assert t1.grad == 1/2
+    assert t2.grad == -3/4
+    assert t1.children[0][1].value == res.value
+    assert t2.children[0][1].value == res.value
 
 
 def test_rtruedriv():
@@ -338,8 +341,8 @@ def test_rtruedriv():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 2/3
-    assert t1.children[0][0] == -2/9
-    assert t1.children[0][1].value == 2/3
+    assert t1.grad == -2/9
+    assert t1.children[0][1].value == res.value
 
 
 def test_pow():
@@ -352,7 +355,9 @@ def test_pow():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 81
-    t1.children[0][0] == 108
+    assert t1.grad == 108
+    assert t1.children[0][1].value == res.value
+
 
 
 def test_rpow():
@@ -365,7 +370,8 @@ def test_rpow():
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 64
-    assert t1.children[0][0] == (64*np.log(4))
+    assert t1.grad == (64*np.log(4))
+    assert t1.children[0][1].value == res.value
 
 
 def test_logistic():
@@ -381,8 +387,24 @@ def test_logistic():
     expected_deriv = np.exp(-3) / (np.exp(-3) + 1) ** 2
 
     assert math.isclose(res.value, expected_value, rel_tol=1e-12)
-    assert math.isclose(t1.children[0][0], expected_deriv, rel_tol=1e-12)
+    assert math.isclose(t1.grad, expected_deriv, rel_tol=1e-12)
     
+
+def test_loge():
+    """
+    Tests the log base e function
+    """
+    t1 = rev.Tensor(3)
+    res = rev.log(t1)
+
+    res.backward()
+
+    expected_value = np.log(t1.value)
+    expected_deriv = 1/t1.value
+
+    assert res.value == expected_value
+    assert t1.grad == expected_deriv
+
 
 #### Tests on the Tensor Class Object ####
 
