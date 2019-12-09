@@ -1,10 +1,15 @@
 import numpy as np
 
+# we use this to get rid of disruptive runtime warnings
+runtime_warning_filter = np.testing.suppress_warnings()
+runtime_warning_filter.filter(RuntimeWarning)
+
 
 class Tensor:
     """
     Class for automatic differentiation reverse mode
     """
+    _gradients_disabled = False
 
     def __init__(self, value):
         if isinstance(value, Tensor):
@@ -27,18 +32,36 @@ class Tensor:
             raise Exception('Cannot call .backward() on a non-scalar')
         self.grad_value = np.array(1.0)
 
+    def add_child(self, weight, output_tensor):
+        if not Tensor._gradients_disabled:
+            self.children.append((weight, output_tensor))
+
     @property
     def grad(self):
         """
         A function that computes the gradient value using the chain rule
         """
         if self.grad_value is None:
-            self.grad_value = 0
+            self.grad_value = np.array(0.0)
             for weight, node in self.children:
                 if callable(weight):
-                    self.grad_value += weight(node.grad)
+                    update = weight(node.grad)
                 else:
-                    self.grad_value += weight * node.grad
+                    update = weight * node.grad
+
+                # fix any issues with broadcasting by summing over
+                # the broadcasted dimensions
+                while (update.shape != ()
+                       and update.shape != self.shape
+                       and update.shape + (1,) != self.shape):
+                    update = update.sum(axis=-1)
+
+                if update.shape + (1,) == self.shape:
+                    update = np.expand_dims(update, axis=-1)
+
+                # add the corrected derivative to the gradient
+                self.grad_value = self.grad_value + update
+
         return self.grad_value
 
     # Comparisons work like they do in numpy. Derivative information is ignored
@@ -73,14 +96,20 @@ class Tensor:
     def __repr__(self):
         return f'Tensor({self.value}, D({self.grad_value}))'
 
+    def reset_grad(self):
+        self.grad_value = None
+
     @property
     def shape(self):
         return self.value.shape
 
     def sum(self):
         z = Tensor(np.sum(self.value))
-        self.children.append((np.ones(self.shape), z))
+        self.add_child(np.ones(self.shape), z)
         return z
+
+    def mean(self):
+        return self.sum() / self.value.size
 
     def prod(self):
         if self.shape == ():
@@ -97,7 +126,7 @@ class Tensor:
                 result[i] *= backward_prod[i + 1]
 
         z = Tensor(np.prod(self.value))
-        self.children.append((result.reshape(self.shape), z))
+        self.add_child(result.reshape(self.shape), z)
         return z
 
     def __neg__(self):
@@ -106,8 +135,8 @@ class Tensor:
     def __add__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value + other.value)
-        self.children.append((1.0, z))
-        other.children.append((1.0, z))
+        self.add_child(1.0, z)
+        other.add_child(1.0, z)
         return z
 
     def __radd__(self, other):
@@ -122,8 +151,8 @@ class Tensor:
     def __mul__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value * other.value)
-        self.children.append((other.value, z))
-        other.children.append((self.value, z))
+        self.add_child(other.value, z)
+        other.add_child(self.value, z)
         return z
 
     def __rmul__(self, other):
@@ -132,19 +161,20 @@ class Tensor:
     def __truediv__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value / other.value)
-        self.children.append((1 / other.value, z))
-        other.children.append((-self.value / other.value**2, z))
+        self.add_child(1 / other.value, z)
+        other.add_child(-self.value / other.value**2, z)
         return z
 
     def __rtruediv__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         return other / self
 
+    @runtime_warning_filter
     def __pow__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value ** other.value)
-        self.children.append((other.value * self.value**(other.value - 1), z))
-        other.children.append((self.value**other.value * np.log(self.value), z))
+        self.add_child(other.value * self.value**(other.value - 1), z)
+        other.add_child(self.value**other.value * np.log(self.value), z)
         return z
 
     def __rpow__(self, other):
@@ -173,16 +203,34 @@ class Tensor:
             return (self_mat.T @ out_grad_mat).reshape(other.value.shape)
 
         z = Tensor(self.value @ other.value)
-        self.children.append((mm_backward_self, z))
-        other.children.append((mm_backward_other, z))
+        self.add_child(mm_backward_self, z)
+        other.add_child(mm_backward_other, z)
         return z
 
     def __rmatmul__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         return other @ self
 
+    def __getitem__(self, idx):
+        z = Tensor(self.value[idx])
+        self.add_child(1, z)
+        return z
+
+    def __setitem__(self, idx, value):
+        self.value[idx] = value.value if isinstance(Tensor, value) else value
+        return self
+
+
+class no_grad:
+    def __enter__(self):
+        Tensor._gradients_disabled = True
+
+    def __exit__(self, typ, val, traceback):
+        Tensor._gradients_disabled = False
+
 
 # Elementary functions
+@runtime_warning_filter
 def _elementary_op(obj, fn, deriv_fn):
     """
     A generic framework to allow for the chain rule of other elementary
@@ -203,7 +251,7 @@ def _elementary_op(obj, fn, deriv_fn):
     """
     obj = obj if isinstance(obj, Tensor) else Tensor(obj)
     z = Tensor(fn(obj.value))
-    obj.children.append((deriv_fn(obj.value), z))
+    obj.add_child(deriv_fn(obj.value), z)
     return z
 
 
