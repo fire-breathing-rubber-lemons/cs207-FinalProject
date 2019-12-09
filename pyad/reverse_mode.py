@@ -2,6 +2,9 @@ import numpy as np
 
 
 class Tensor:
+    """
+    Class for automatic differentiation reverse mode
+    """
 
     def __init__(self, value):
         self.value = value
@@ -9,11 +12,18 @@ class Tensor:
         self.grad_value = None
 
     def backward(self):
+        """
+        A function that seeds in the derivative of a function with respect to itself, i.e. df/df = 1
+        """
         self.grad_value = 1.0
 
     @property
     def grad(self):
+        """
+        A function that computes the gradient value using the chain rule
+        """
         if self.grad_value is None:
+            # recurse only if the value is not yet cached
             self.grad_value = sum(weight * var.grad for weight, var in self.children)
         return self.grad_value
 
@@ -77,6 +87,23 @@ class Tensor:
 
 # Elementary functions
 def _elementary_op(obj, fn, deriv_fn):
+    """
+    A generic framework to allow for the chain rule of other elementary
+    functions taken from the numpy module.
+    Parameters
+    ----------
+    obj : Scalar or Tensor object which the elementary function is being
+        differentiated at
+    fn : np.function
+        The elementary function from the numpy module
+    deriv_fun:  np.function
+        The prespecified derivative of the given numpy elementary function
+    Returns
+    -------
+    Tensor: class
+        Tensor object which contains the resulting value and result from the
+        chain rule (new derivative)
+    """
     obj = obj if isinstance(obj, Tensor) else Tensor(obj)
     z = Tensor(fn(obj.value))
     obj.children.append((deriv_fn(obj.value), z))
