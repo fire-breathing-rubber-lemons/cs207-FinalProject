@@ -162,7 +162,7 @@ def logistic(x):
 
 
 def log(x, base=np.e):
-    return _elementary_op(x, np.log, lambda x: 1 / x, 'log')
+    return _elementary_op(x, np.log, lambda x: 1 / x, 'log') / np.log(base)
 
 
 def log2(x):
