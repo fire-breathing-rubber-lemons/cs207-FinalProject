@@ -117,15 +117,20 @@ class NeuralNet:
     def score(self, x, y):
         return self.loss_fn(self.evaluate(x), y)
 
+    def _reset_weight_grads(self):
+        for l in self.layers:
+            l['weights'].reset_grad()
+            l['bias'].reset_grad()
+
     def _update_weights(self, learning_rate=1e-3):
         for l in self.layers:
             l['weights'] = l['weights'] - l['weights'].grad * learning_rate
             l['bias'] = l['bias'] - l['bias'].grad * learning_rate
-            l['weights'].reset_grad()
-            l['bias'].reset_grad()
+        self._reset_weight_grads()
 
     def train(self, x_train, y_train, x_val, y_val, *,
-              batch_size=20, epochs=20, learning_rate=1e-3):
+              batch_size=20, epochs=20, learning_rate=1e-3, verbose=True):
+        self._reset_weight_grads()
 
         for epoch in range(epochs):
             try:
@@ -151,20 +156,21 @@ class NeuralNet:
                     val_preds = self.evaluate(x_val)
                     avg_val_loss = self.loss_fn(val_preds, y_val).value
 
-                # Logging some information
-                header = f'Epoch {epoch + 1}'
-                print(header + '\n' + '=' * len(header))
-                print(f'Duration: {time.time() - start_time:.3f} sec')
-                print(f'Avg train loss: {total_train_loss / len(x_train):.3g}')
-                print(f'Avg validation loss: {avg_val_loss:.3g}')
+                if verbose:
+                    # Logging some information
+                    header = f'Epoch {epoch + 1}'
+                    print(header + '\n' + '=' * len(header))
+                    print(f'Duration: {time.time() - start_time:.3f} sec')
+                    print(f'Avg train loss: {total_train_loss / len(x_train):.3g}')
+                    print(f'Avg validation loss: {avg_val_loss:.3g}')
 
-                if self.loss_fn_name in ('nll', 'cross_entropy'):
-                    train_acc = tot_train_correct / len(x_train)
-                    val_acc = (val_preds.value.argmax(axis=0) == y_val).mean()
-                    print(f'Avg train acc: {train_acc:.3g}')
-                    print(f'Avg validation acc: {val_acc:.3g}')
+                    if self.loss_fn_name in ('nll', 'cross_entropy'):
+                        train_acc = tot_train_correct / len(x_train)
+                        val_acc = (val_preds.value.argmax(axis=0) == y_val).mean()
+                        print(f'Avg train acc: {train_acc:.3g}')
+                        print(f'Avg validation acc: {val_acc:.3g}')
 
-                print()
+                    print()
             except KeyboardInterrupt:
                 print(f'Stopping training after {epoch} epochs...')
                 break
