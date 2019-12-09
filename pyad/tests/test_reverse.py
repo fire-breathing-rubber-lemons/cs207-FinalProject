@@ -262,6 +262,7 @@ def test_add():
     test_tensor2 = rev.Tensor(5)
 
     new_tensor = test_tensor1 + test_tensor2
+    new_tensor.backward()
 
     assert type(new_tensor) == rev.Tensor
     assert new_tensor.value == 8
@@ -275,6 +276,7 @@ def test_radd():
     """
     t1 = rev.Tensor(3)
     res = 5 + t1
+    res.backward()
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 8
@@ -288,6 +290,7 @@ def test_sub():
     t1 = rev.Tensor(3)
     t2 = rev.Tensor(1)
     res = t1 - t2
+    res.backward()
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 2
@@ -302,6 +305,7 @@ def test_rsub():
     """
     t1 = rev.Tensor(3)
     res = 5 - t1
+    res.backward()
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 2
@@ -330,6 +334,7 @@ def test_rtruedriv():
     """
     t1 = rev.Tensor(3)
     res = 2 / t1
+    res.backward()
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 2/3
@@ -343,6 +348,7 @@ def test_pow():
     """
     t1 = rev.Tensor(3)
     res = t1 ** 4
+    res.backward()
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 81
@@ -355,6 +361,7 @@ def test_rpow():
     """
     t1 = rev.Tensor(3)
     res = 4 ** t1
+    res.backward()
 
     assert isinstance(res, rev.Tensor)
     assert res.value == 64
@@ -368,8 +375,10 @@ def test_logistic():
     t1 = rev.Tensor(3)
     res = rev.logistic(t1)
 
+    res.backward()
+
     expected_value = 1 / (1 + np.exp(-3))
-    expected_deriv = np.exp(3) / (np.exp(3) + 1) ** 2
+    expected_deriv = np.exp(-3) / (np.exp(-3) + 1) ** 2
 
     assert math.isclose(res.value, expected_value, rel_tol=1e-12)
     assert math.isclose(t1.children[0][0], expected_deriv, rel_tol=1e-12)
