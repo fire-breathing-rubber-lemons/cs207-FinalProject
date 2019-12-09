@@ -1,5 +1,5 @@
 import numpy as np
-#import networkx as nx
+import networkx as nx
 import matplotlib.pyplot as plt
 
 class Tensor:
@@ -156,11 +156,13 @@ def exp(x):
 
 
 def logistic(x):
-    return 1 / (1 + exp(-x))
+    f = lambda x: 1/(1+np.exp(-x))
+    df = lambda x: np.exp(-x)/(1+np.exp(-x))**2	
+    return _elementary_op(x, f, df, 'logistic')
 
 
 def log(x, base=np.e):
-    return _elementary_op(x, np.log, lambda x: 1 / x) / np.log(base)
+    return _elementary_op(x, np.log, lambda x: 1 / x, 'log')
 
 
 def log2(x):
@@ -258,15 +260,19 @@ class rev_graph:
             key_formatted = (key[0], key[1])
             labels_dict[key_formatted] = value
 
-
-        plt.figure() 
+        plt.figure(figsize=(10,10))
         G = nx.DiGraph()
         G.add_edges_from(edges)
-        pos = nx.spring_layout(G)
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=labels_dict)
-                                
-        nx.draw(G, with_labels=True)
+        pos = nx.spring_layout(G, iterations=500, k=1)
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=labels_dict, label_pos=0.5)
+        nx.draw_networkx(G, pos, with_labels=False, node_size = 200)
+
+        for k,v in pos.items():
+            x,y=v
+            plt.text(x+0.01,y+0.03,s=k)
+        
         plt.show()
+        
 
         
         
