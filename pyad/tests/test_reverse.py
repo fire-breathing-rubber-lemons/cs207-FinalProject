@@ -8,18 +8,18 @@ import pytest
 #       End to End Tests       #
 ################################
 def test_reverse_by_example():
-	x = rev.Tensor(0.5)
-	y = rev.Tensor(4.2)
-	z = rev.Tensor(3)
-	f = x * y**3 + rev.sin(x) - rev.logistic(z)
+    x = rev.Tensor(0.5)
+    y = rev.Tensor(4.2)
+    z = rev.Tensor(3)
+    f = x * y**3 + rev.sin(x) - rev.logistic(z)
 
     # set df seed
-	f.backward()
+    f.backward()
 
-	assert abs(f.value - (0.5*4.2**3+np.sin(0.5) - 1/(1+np.exp(-3)))) <= 1e-15
-	assert abs(x.grad - (4.2**3 + np.cos(0.5))) <= 1e-15
-	assert abs(y.grad - (3*0.5*4.2**2)) <= 1e-15
-	assert abs(z.grad - (-np.exp(-3)/(1+np.exp(-3))**2)) <= 1e-15
+    assert abs(f.value - (0.5*4.2**3+np.sin(0.5) - 1/(1+np.exp(-3)))) <= 1e-15
+    assert abs(x.grad - (4.2**3 + np.cos(0.5))) <= 1e-15
+    assert abs(y.grad - (3*0.5*4.2**2)) <= 1e-15
+    assert abs(z.grad - (-np.exp(-3)/(1+np.exp(-3))**2)) <= 1e-15
 
 
 def test_case_base_trigonometric():
@@ -195,41 +195,41 @@ def test_case_base_abs():
 # #### Tests on the Tensor Class Object ####
 
 def test_children_Tensor():
-	x = rev.Tensor(1)
-	y = rev.Tensor(2)
-	z = rev.Tensor(3)
+    x = rev.Tensor(1)
+    y = rev.Tensor(2)
+    z = rev.Tensor(3)
 
-	function = (x + y) * z
-	function.backward()
+    function = (x + y) * z
+    function.backward()
 
-	# Real children
-	child1 = x.children
-	child2 = y.children
-	child3 = z.children
-	child4 = child1[0][1].children
-	child5 = child2[0][1].children
+    # Real children
+    child1 = x.children
+    child2 = y.children
+    child3 = z.children
+    child4 = child1[0][1].children
+    child5 = child2[0][1].children
 
-	# Leaf nodes
-	child6 = child3[0][1].children
-	child7 = child4[0][1].children
-	child8 = child5[0][1].children
+    # Leaf nodes
+    child6 = child3[0][1].children
+    child7 = child4[0][1].children
+    child8 = child5[0][1].children
 
-	assert(child6 == [])
-	assert(child7 == [])
-	assert(child8 == [])
+    assert(child6 == [])
+    assert(child7 == [])
+    assert(child8 == [])
 
-	assert(child1 == child2)
-	assert(child3 == child4 == child5)
+    assert(child1 == child2)
+    assert(child3 == child4 == child5)
 
 
 def test_backward_Tensor():
-	x = rev.Tensor(3)
+    x = rev.Tensor(3)
 
-	assert(x.grad_value == None)
+    assert(x.grad_value == None)
 
-	x.backward()
+    x.backward()
 
-	assert(x.grad_value == 1)
+    assert(x.grad_value == 1)
 
 
 def test_repr():
