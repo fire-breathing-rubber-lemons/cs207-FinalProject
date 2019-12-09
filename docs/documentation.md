@@ -69,17 +69,21 @@ See the **Extension** section below for more details on the reverse mode.
 
 ## How to use `pyad`
 
-### Set up
+### How to Install
 
 **pyad** will be self contained on Github and should be installable using pip and the github ssh address.
 ```bash
 pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
 ```
 
-**pyad** will follow the standard Python packaging framework. To use the forward mode module of **pyad** it will first need to be imported using:
+TODO: PyPI
+
+
+**pyad** will follow the standard Python packaging framework. To use the forward and reverse mode modules of **pyad** it will first need to be imported using:
 
 ```python
 import pyad.forward_mode as fwd
+import pyad.reverse_mode as rev
 ```
 
 ### Interaction Theory
@@ -127,6 +131,29 @@ def test_fun(x, y, z):
 112.17797471022807
 ```
 
+
+### Reverse Mode
+
+### Demo of reverse mode
+```python
+import pyad.reverse_mode as rev
+
+x = rev.Tensor(0.5)
+y = rev.Tensor(4.2)
+z = rev.Tensor(3)
+f = x * y**3 + rev.sin(x) - rev.logistic(z)
+
+f.backward()
+
+>>> f.value
+36.570851411781774
+>>> x.grad
+74.96558256189039
+>>> y.grad
+26.46
+>>> z.grad
+-0.045176659730912144
+```
 
 ## Software Organization
 
@@ -200,36 +227,36 @@ The following custom elementary functions are available in both the forward and 
 
 ## Extension
 
-Looking at applications of automatic differentiation, the one which stands out most prominently is back propagation for Neural Networks, having also been covered within the Harvard course, Introduction to Data Science.
+### Reverse Mode
 
-<img src=nn_design.png width="700">
+Unlike forward mode, reverse mode differentiation tracks how every node affects one output. That is, it applies the derivative operator to every node.
 
-Reference: AC209 - Introduction to Data Science, Harvard
+<img src=reverse_mode.png width="300">
 
-Back propagation is used in machine learning to efficiently calculate the weights within a Neural Network. It utilzes a form of gradient descent to update the weights based on the derivative of the Loss function.
+**Motivation**: The reason for implementing the reverse mode of automatic differentiation is that it is much more efficient for when the number of features (variables to differentiate with respect too) exceeds the number of elementary functions. In the case of a neural network there will commonly be tens if not hundreds of nodes each of which have interconnecting weights creating hundreds if not thousands of weights which needs to be updated. Neural networks therefore present the perfect scenario to implement and test the reverse mode of automatic differentiation through back propagation.
 
-This is where automatic differentiation comes into play (specifically the reverse mode). Evaluating the neural network at some random starting point will produce a first calculation of Loss as a numeric value. What is then required is to work backwards from the output layer, calculating the derivative of the Loss function with respect to each neuron in the node and then update the weight based on this numeric value of the derivative and the learning rate specified.
+**Intuition**: As in forward mode automatic differentiation, the key intuition here is again the chain rule:
+
+<img src=chain_rule.png width="300">
+
+ Since the chain rule is symmetric, we can flip the numerator and the denominator without changing the value. So we can rewrite the chain rule with the derivatives upside down:
+
+ <img src=chain_rule_inverted.png width="300">
+
+Such that we have inverted the input-output roles of the variables.
+
+Reference: [rufflewind](https://rufflewind.com/2016-12-30/reverse-mode-automatic-differentiation)
+
+The Reverse Mode Differentiation or Back propagation is used in machine learning to efficiently calculate the weights within a Neural Network. It utilzes a form of gradient descent to update the weights based on the derivative of the Loss function.
+
+Evaluating the neural network at some random starting point will produce a first calculation of Loss as a numeric value. What is then required is to work backwards from the output layer, calculating the derivative of the Loss function with respect to each neuron in the node and then update the weight based on this numeric value of the derivative and the learning rate specified.
+
+<img src=back_prop_nn.png width="300">
 
 For a given weight within the node the update process is:
 
 <img src=backprop_update.png width="300">
 
-For our future feature we'd like to implement the reverse mode of automatic differentiation, in order to make it a seamless process to generate a trained neural network from a given loss function.
 
-#### Backward Mode
+TODO: More explanation and demo for neural net
 
-The reason for implementing the reverse mode of automatic differentiation is that it is much more efficient for when the number of features (variables to differentiate with respect too) exceeds the number of elementary functions. In the case of a neural network there will commonly be tens if not hundreds of nodes each of which have interconnecting weights creating hundreds if not thousands of weights which needs to be updated. Neural networks therefore present the perfect scenario to implement and test the reverse mode of automatic differentiation through back propagation.
-
-
-#### Implementation
-
-The current software implementation is designed to allow for expansion to other forms of automatic differentiation. The existing forward mode implementation is contained within the forward_mode.py file which has the Variable, Tensor and Multivariate Derivative classes required to set up and execute the forward mode. To implement the reverse mode we will add in a second file - reverse_mode.py which will include the required functions.
-
-The reverse mode however will require a slightly different method of implementation:
-
-1. Forward pass of reverse mode - evaluates the function values and partial derivatives at each node.
-2. Backward pass - calculate the chain rule backwards from the output.
-
-This will require us to modify the way values and derivaties are stored within the Variable and Tensor classes as there is now a requirement to store information throughout the tree during the forward pass and utilize this on the backward pass.
-
-Where possible we can reuse or edit classes from the forward mode implementation - possibly combining into a single automatic_differentiation.py and then having subclasses of the Variable or Tensor objects for forward and reverse mode which would store different value and allow for the implementation of both modes within the pyad package.

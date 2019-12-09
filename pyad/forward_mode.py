@@ -371,6 +371,7 @@ class Variable(Tensor):
 
 
 # Elementary operations of a single variable. They all use chain rule.
+@runtime_warning_filter
 def _elementary_op(obj, fn, deriv_fn):
     """
     A generic framework to allow for the chain rule of other elementary
