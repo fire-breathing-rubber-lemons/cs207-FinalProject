@@ -69,17 +69,21 @@ See the **Extension** section below for more details on the reverse mode.
 
 ## How to use `pyad`
 
-### Set up
+### How to Install
 
 **pyad** will be self contained on Github and should be installable using pip and the github ssh address.
 ```bash
 pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
 ```
 
-**pyad** will follow the standard Python packaging framework. To use the forward mode module of **pyad** it will first need to be imported using:
+TODO: PyPI
+
+
+**pyad** will follow the standard Python packaging framework. To use the forward and reverse mode modules of **pyad** it will first need to be imported using:
 
 ```python
 import pyad.forward_mode as fwd
+import pyad.reverse_mode as rev
 ```
 
 ### Interaction Theory
@@ -127,6 +131,29 @@ def test_fun(x, y, z):
 112.17797471022807
 ```
 
+
+### Reverse Mode
+
+### Demo of reverse mode
+```python
+import pyad.reverse_mode as rev
+
+x = rev.Tensor(0.5)
+y = rev.Tensor(4.2)
+z = rev.Tensor(3)
+f = x * y**3 + rev.sin(x) - rev.logistic(z)
+
+f.backward()
+
+>>> f.value
+36.570851411781774
+>>> x.grad
+74.96558256189039
+>>> y.grad
+26.46
+>>> z.grad
+-0.045176659730912144
+```
 
 ## Software Organization
 
@@ -230,25 +257,6 @@ For a given weight within the node the update process is:
 
 <img src=backprop_update.png width="300">
 
-**Demo**
-```
-import pyad.reverse_mode as rev
 
-x = rev.Tensor(0.5)
-y = rev.Tensor(4.2)
-z = rev.Tensor(3)
-f = x * y**3 + rev.sin(x) - rev.logistic(z)
-
-f.backward()
-
->>> f.value
-36.570851411781774
->>> x.grad
-74.96558256189039
->>> y.grad
-26.46
->>> z.grad
--0.045176659730912144
-```
 TODO: More explanation and demo for neural net
 
