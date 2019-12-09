@@ -15,14 +15,10 @@ class Tensor:
     _gradients_disabled = False
 
     def __init__(self, value):
-        if isinstance(value, Tensor):
-            self.value = np.array(value.value)
-            self.children = value.children.copy()
-            self.grad_value = None
-        else:
-            self.value = np.array(value)
-            self.children = []
-            self.grad_value = None
+        value = value.value if isinstance(value, Tensor) else value
+        self.value = np.array(value, dtype=np.float64)
+        self.children = []
+        self.grad_value = None
 
         if len(self.value.shape) > 2:
             raise ValueError('Can only support 0-D, 1-D, and 2-D Tensors')
@@ -32,7 +28,7 @@ class Tensor:
         A function that seeds in the derivative of a function with respect to itself, i.e. df/df = 1
         """
         if self.value.shape != ():
-            raise Exception('Cannot call .backward() on a non-scalar')
+            raise ValueError('Cannot call .backward() on a non-scalar')
         self.grad_value = np.array(1.0)
 
     def add_child(self, weight, output_tensor, symbol):
@@ -101,14 +97,18 @@ class Tensor:
 
     def reset_grad(self):
         self.grad_value = None
+        self.children = []
 
     @property
     def shape(self):
         return self.value.shape
 
-    def sum(self):
-        z = Tensor(np.sum(self.value))
-        self.add_child(np.ones(self.shape), z, '+')
+    def sum(self, axis=None):
+        def sum_backward(out_grad):
+            return np.broadcast_to(out_grad, self.shape)
+
+        z = Tensor(np.sum(self.value, axis=axis))
+        self.add_child(sum_backward, z, '+')
         return z
 
     def mean(self):
@@ -161,6 +161,7 @@ class Tensor:
     def __rmul__(self, other):
         return self * other
 
+    @runtime_warning_filter
     def __truediv__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
         z = Tensor(self.value / other.value)
@@ -188,8 +189,6 @@ class Tensor:
         """
         A helper function for reshaping numpy arrays as 2D matrices
         """
-        if x.shape == ():
-            return x.reshape(1, 1)
         return x.reshape(len(x), -1)
 
     def __matmul__(self, other):
@@ -215,12 +214,22 @@ class Tensor:
         return other @ self
 
     def __getitem__(self, idx):
+        def getitem_backward(out_grad):
+            res = np.zeros(self.shape)
+            res[idx] = out_grad
+            return res
+
         z = Tensor(self.value[idx])
-        self.add_child(1, z, 'getitem')
+        self.add_child(getitem_backward, z, 'getitem')
         return z
 
-    def __setitem__(self, idx, value):
-        self.value[idx] = value.value if isinstance(Tensor, value) else value
+    def __setitem__(self, idx, other):
+        def setitem_backward(out_grad):
+            return out_grad[idx]
+
+        other = other if isinstance(other, Tensor) else Tensor(other)
+        other.add_child(setitem_backward, self)
+        self.value[idx] = other.value
         return self
 
 

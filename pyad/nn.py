@@ -9,11 +9,11 @@ def linear_activation(x):
 
 def softmax_activation(x):
     z = rev.exp(x)
-    return z / z.sum()
+    return z / z.sum(axis=0)
 
 
 def log_softmax_activation(x):
-    return x - rev.log(rev.exp(x).sum())
+    return x - rev.log(rev.exp(x).sum(axis=0))
 
 
 def tanh_activation(x):
@@ -122,7 +122,8 @@ class NeuralNet:
             l['weights'].reset_grad()
             l['bias'].reset_grad()
 
-    def _update_weights(self, learning_rate=1e-3):
+    def _update_weights(self, learning_rate, batch_size):
+        learning_rate = learning_rate / batch_size
         for l in self.layers:
             l['weights'] = l['weights'] - l['weights'].grad * learning_rate
             l['bias'] = l['bias'] - l['bias'].grad * learning_rate
@@ -145,7 +146,7 @@ class NeuralNet:
 
                     loss = self.loss_fn(y_batch_pred, y_batch)
                     loss.backward()
-                    self._update_weights(learning_rate)
+                    self._update_weights(learning_rate, len(x_batch))
 
                     total_train_loss += loss.value * len(x_batch)
 

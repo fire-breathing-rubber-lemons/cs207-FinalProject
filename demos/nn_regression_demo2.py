@@ -33,12 +33,15 @@ test_loss = [nn.score(X_test, y_test).value]
 for i in range(100):
     nn.train(
         X_train, y_train, X_test, y_test,
-        epochs=10, learning_rate=1e-3, verbose=False
+        batch_size=20, epochs=5, learning_rate=1e-3, verbose=False
     )
     train_loss.append(nn.score(X_train, y_train).value)
     test_loss.append(nn.score(X_test, y_test).value)
 
-epochs = [10 * i for i in range(101)]
+    if (i + 1) % 10 == 0:
+        print(f'{i + 1}/100 loops completed')
+
+epochs = [5 * i for i in range(101)]
 plt.plot(epochs, train_loss)
 plt.plot(epochs, test_loss)
 
