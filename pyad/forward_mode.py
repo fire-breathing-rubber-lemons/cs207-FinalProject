@@ -625,7 +625,7 @@ def log(tensor, base=np.e):
         The value of the variable or constant which the natural logarithm is
         being differentiated at
 
-    base: number
+    base: float | Tensor
         The base of the logarithm. Defaults to `np.e`. Can be a Tensor
 
     Returns
