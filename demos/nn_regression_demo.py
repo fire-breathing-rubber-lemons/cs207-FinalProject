@@ -17,7 +17,7 @@ nn.add_layer(50, 1, activation='linear')
 
 nn.train(
     X_train, y_train, X_test, y_test,
-    batch_size=200, learning_rate=1e-4, epochs=20
+    batch_size=20, learning_rate=1e-4, epochs=10
 )
 
 

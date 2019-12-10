@@ -88,6 +88,8 @@ In general the **pyad** package will work on an object oriented, class based app
 The user should be able to specify any differentiable function in the standard format, either a defined python function or a lambda function:
 
 ```python
+import pyad.forward_mode as fwd
+
 def test_function(x, y):
     cos_x = fwd.cos(x)
     sin_y = fwd.sin(y)
@@ -113,9 +115,9 @@ z = fwd.Variable('z', 3)
 Tensor(8, D(z=1, x=2, y=2))
 
 def test_fun(x, y, z):
-	return fwd.exp(fwd.cos(x) + fwd.sin(y))**z
+    return fwd.exp(fwd.cos(x) + fwd.sin(y))**z
 
->>> result = test_fun(x,y,z)
+>>> result = test_fun(x, y, z)
 >>> result.value
 77.38548247505909
 >>> result.d['x']
@@ -157,7 +159,6 @@ This simple additional class can be valuable in helping to understand the flow o
 This is a demonstration of the code required to plot the reverse mode graph and the example output:
 ```python
 import reverse_mode as rev
-import numpy as np
 import matplotlib.pyplot as plt
 
 x = rev.Tensor(0.5)
@@ -165,16 +166,75 @@ y = rev.Tensor(4.2)
 z = rev.Tensor(3)
 f = x * y**3 + rev.sin(x) - rev.logistic(z)
 
-#set df seed
+# set df seed
 f.backward()
 
 rev_g = rev.rev_graph()
-plot = rev_g.plot_graph([x,y,z])
+plot = rev_g.plot_graph([x, y, z])
 
 plt.show()
 ```
 <img src=reverse_graph.png width="600">
 
+
+### Demo of NeuralNet
+We also implemented a neural network library using the reverse mode for building, training, and evaluating neural networks. Here is an example of how to use the `NeuralNet` library for a sample binary classification problem.
+
+```python
+import numpy as np
+from pyad.nn import NeuralNet
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+
+np.random.seed(0)
+data = load_breast_cancer()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    data.data, data.target, train_size=0.8, random_state=0
+)
+
+model = NeuralNet(loss_fn='cross_entropy')
+model.add_layer(X_train.shape[1], 100, activation='linear')
+model.add_layer(100, 100, activation='logistic')
+model.add_layer(100, 1 + np.max(y_train), activation='linear')
+
+model.train(
+    X_train, y_train, X_test, y_test,
+    batch_size=1, learning_rate=1e-3, epochs=20
+)
+
+
+print('Predictions:', model.predict(X_test))
+```
+
+The output is
+```
+Epoch 1
+=======
+Duration: 0.547 sec
+Avg train loss: 0.636
+Avg validation loss: 0.597
+Avg train acc: 0.644
+Avg validation acc: 0.588
+
+
+...
+
+
+Epoch 20
+========
+Duration: 0.663 sec
+Avg train loss: 0.27
+Avg validation loss: 0.283
+Avg train acc: 0.897
+Avg validation acc: 0.886
+
+
+Predictions: [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 0 1 0 0 1 1 1 1 1 1 1 1 0 1 0 1 0 1 0 1
+ 0 1 0 1 1 0 1 1 0 1 1 1 0 1 1 0 1 1 1 1 1 1 0 1 0 1 1 0 1 0 0 0 1 1 0 1 1
+ 0 1 1 1 1 1 0 0 0 1 0 1 1 1 0 0 1 0 1 1 1 1 0 1 1 1 1 1 1 1 0 1 0 1 1 1 1
+ 1 0 1]
+```
 
 ## Software Organization
 
@@ -188,31 +248,28 @@ cs207-FinalProject/
         forward_mode.py
         reverse_mode.py
         nn.py
-        utilities/
-            __init__.py
         tests/
             __init__.py
             test_forward_mode.py
             test_forward_mode_end2end.py
             test_reverse.py
             test_nn.py
-    docs/
-        documentation.md
-        milestone1.md
-        milestone2.md
+
     demos/
         forward_mode_demo.py
         nn_classification_demo.py
         nn_regression_demo.py
         nn_regression_demo2.py
-        rever_mode_demo.py
+        reverse_mode_demo.py
 
+    docs/
+        documentation.md
+        milestone1.md
+        milestone2.md
 ```
 
 #### Modules
 `pyad` contains two core modules, one for forward mode autodifferentiation and one for reverse mode autodifferentiation. A neural network module that supports a variety of loss functions is also implemented to demonstrate the effectiveness of reverse mode. Test modules containing unit tests and end-to-end tests for forward and reverse mode, as well as neural network are also included in the `/pyad/tests/` directory.
-
-TODO: add utilities
 
 #### Testing
 Our test suite is located in the `tests/` directory of the package. To run our tests, we have used both `TravisCI` as well as `CodeCov`.
@@ -230,32 +287,70 @@ We use [`setuptools`](https://packaging.python.org/tutorials/packaging-projects/
 
 #### Core Data Structures
 
-The following classes are implemented within the forward mode and reverse mode modules: 
+The following classes are implemented within the `forward_mode.py`:
 
-- `MultivariateDerivative`: This class is used to hold derivative information. It is called automatically by the Variable and Tensor classes. 
+- `MultivariateDerivative`: This class is used to hold derivative information. It is called automatically by the Variable and Tensor classes.
 	- A `MultivariateDerivative` object has a **single attribute** `MultivariateDerivative.variables` which is a dictionary holding the variable name and value of the derivative (or the partial derivatives with respect to each variable, in the case of multivariate functions).
-	
-- `Tensor`: This class holds the value and derivative information of a variable. 
-	- A `Tensor` object has **two attributes**, `Tensor.value`, which holds the value of the variable, and `Tensor.d`, which is a `MultivariateDerivative` object holding the derivative information for the variable. 
-	- `Tensor.value` and the derivatives stored in `Tensor.d` can be scalars or vectors
+    - It is possible to access the value of a particular variable's partial derivative by indexing into a `MultivariateDerivate` object with the name of that the variable. So, if `d` is `MultivariateDerivative`, then `d['x']` will be a numpy array representing the partial w.r.t. `'x'`.
 
-- `Variable`: This class is a sub-class of `Tensor`. 
-	- The `Variable` constructor takes a string name and a scalar or vector value as input which is used to initialize the name and value of the variable. The derivative is initialized as 1 in the case of scalar inputs and as the identity matrix in the case of vector inputs.  
+- `Tensor`: This class holds the value and derivative information of a variable.
+	- A `Tensor` object has **two attributes**, `Tensor.value`, which is a numpy array that stores the value of the object, and `Tensor.d`, which is a `MultivariateDerivative` object holding the derivative information for each of the variables that were used to construct the Tensor.
+	- `Tensor.value` and the derivatives stored in `Tensor.d` can be numpy scalars or numpy vectors
 
-The user can access the value of a Variable object `x` using `x.value`. The user also can access the derivative of `x` with respect to a variable named `'y'` using `x.d['y']` (this functionality is implemented using the getitem dunder method as `d` itself is not a dictionary).
+- `Variable`: This class is a sub-class of `Tensor`.
+	- The `Variable` constructor takes a string name and a scalar or vector value as input which is used to initialize the name and value of the variable. The derivative is initialized as 1 in the case of scalar inputs and as the identity matrix in the case of vector inputs.
+
+The user can access the value of a Tensor object `t` using `t.value`. The user also can access the derivative of `t` with respect to a variable named `'y'` using `t.d['y']` (this functionality is implemented using the `__getitem__` dunder method as `d` itself is not a dictionary).
 
 #### External dependencies
+
+##### Core dependencies
 We use `numpy` arrays to hold the `value` attribute of the `Tensor` object as well as the values of derivatives in the `variables` dictionary attribute of the `MultivariateDerivative` object. We additionally use the `numpy` implementations of trigonometric, exponential, logarithmic and absolute value functions to perform efficient mathematical computations in our custom functions for elementary operations described below.
+
+##### Other dependencies
+We use `pytest` to perform unit testing.
+
+For our extension, we also make use of `matplotlib` for visualizing charts and `networkx` for visualizing graphs.
+
+For our demos, we use `scikit-learn` to load sample datasets.
 
 #### Elementary functions and derivative computation
 
 The computation of the value and derivative of a variable at each stage in the evaluation sequence is accomplished in two ways:
 
-- For the addition, subtraction, multiplication, division and power elementary functions, **operator overloading** is used within the `Tensor` and `MultivariateDerivative` classes. When an overloaded operator acts on two `Tensor` or `Variable` objects, it computes the value of the new evaluation trace  using the `value` attributes of the `Tensor` objects and calls the equivilent overloaded operator in the  `MultivariateDerivative` class to compute the new derivatives using the chain rule on the derivative values stored in the `d` attributes of each object. The value and derivatives of the new evaluation trace are returned as a new `Tensor` object.  
+- For the addition, subtraction, multiplication, division and power elementary functions, **operator overloading** is used within the `Tensor` and `MultivariateDerivative` classes. When an overloaded operator acts on two `Tensor` or `Variable` objects, it computes the real value of the expression by performing a vectorized (using numpy) computation on the `.value` attributes of the `Tensor` objects. Non-Tensor objects are first converted to Tensors before operating on them.
 
-- For the remaining elementary functions, **custom functions** are defined outside of the core class definitions but within the forward and reverse mode modules. These functions are implemented using a general `_elementary_op` function which has three inputs: a `Tensor` or `Variable` object, an elementary function, and a function representing the derivative of the elementary function. The `_elementary_op` function computes the value of the new evaluation trace using the elementary function on the input tensor's value. It also employs the chain rule to compute the derivative of the new evaluation trace using the derivatives stored in the input tensor and the input derivative function. The value and derivatives of the new evaluation trace are returned as a new `Tensor` object. 
+We then compute the derivative of the operation w.r.t. each variable involved in both Tensors by using chain rule. We update the `MultivariateDerivative` by using the overloaded `__add__()` operation to add two `MultivariateDerivative`s together and `mul()` to scale a `MultivariateDerivative` by some number.
 
-The following custom elementary functions are available in both the forward and reverse mode modules and can be used to create more complex custom functions: `sin`: sine ,`cos`: cosine,`tan`: tangent, `arcsine`: arcsine, `arccos`:  arccosine, `arctan`: arctangent, `sinh`: hyperbolic sine, `cosh`: hyperbolic cosine, `tanh`:  hyperbolic tangent function, `abs`: absolute value , `exp`: exponential, `log`: natural logarithm, `log2`: logarithm, base 2, `log10`: logarithm base 10, `sqrt`: square root, `cbrt`: cube root, `power`: power, `logistic`: logistic, defined as 1 / (1 + exp(-x))
+The value and derivatives of the operand are stored in a new Tensor object. Note that because `MultivariateDerivative` is essentially a wrapper for a dictionary that associates different variables with different partial derivatives, each operation is able to compute all partial derivatives at once.
+
+Furthermore, since we use `numpy`, we get vectorized operations for free as well. Our forward mode library is therefore capable of computing vector functions of multiple different vector inputs.
+
+- For the remaining elementary functions, **custom functions** are defined outside of the core class definitions but within the forward and reverse mode modules. These functions are implemented using a general `_elementary_op` function which has three inputs: a `Tensor` or `Variable` object, an elementary function, and a function representing the derivative of the elementary function. The `_elementary_op` function computes the value of the new evaluation trace using the elementary function on the input tensor's value. It also employs the chain rule to compute the derivative of the new evaluation trace using the derivatives stored in the input tensor and the input derivative function. The value and derivatives of the new evaluation trace are returned as a new `Tensor` object.
+
+The following custom elementary functions are available in both the forward and reverse mode modules and can be used to create more complex custom functions:
+
+- `sin`: standard trignometric sine function
+- `cos`: standard trignometric cosine function
+- `tan`: standard trignometric tangent function
+- `arcsin`: standard trignometric arcsin function
+- `arccos`: standard trignometric arcos function
+- `arctan`: standard trignometric arctan function
+- `sinh`: hyperbolic sine
+- `cosh`: hyperbolic cosine
+- `tanh`: hyperbolic tangent
+- `abs`: absolute value
+- `exp`: natural exponential
+- `log`: defaults to natural log, but arbitrary bases are supported
+- `log2`: logarithm, base 2
+- `log10`: logarithm base 10
+- `sqrt`: square root
+- `cbrt`: cube root
+- `power`: power
+- `logistic`: the logistic function, defined as 1 / (1 + exp(-x))
+
+
+The forward mode versions of these functions are located in `forward_mode.py` and the reverse mode versions are located in `reverse_mode.py`.
 
 ## Extension
 
@@ -289,6 +384,43 @@ For a given weight within the node the update process is:
 
 <img src=backprop_update.png width="300">
 
+If the loss and the gradient is only computed for a subset of the training data, then this weight update is called [Stochastic Gradient Descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent).
 
-TODO: More explanation and demo for neural net
+#### Implementation
+TODO: discuss how reverse mode is implemented
 
+
+### The `pyad` Neural Network Module
+`pyad` comes with a module for building, training, and evaluating neural networks for multiple different types of machine learning problems ranging from regression to classfication.
+
+#### Implementation
+The neural network package is implemented in `nn.py`. The core class in this file is the `NeuralNet` which makes extensive use of `pyad.reverse_mode`.
+
+The initializer for `NeuralNet` takes in a loss function which may be one of:
+- `mse`: Mean Squared Error
+- `rmse`: Root Mean Squared Error
+- `nll`: Negative Log-Likelihood
+- `cross_entropy`: Categorical Cross Entropy
+
+See [Towards Data Science](https://towardsdatascience.com/common-loss-functions-in-machine-learning-46af0ffc4d23) for some more details on the mathetmatical defintions of these loss functions.
+
+These loss functions define the type of machine learning problem which the neural network will try to solve. If `mse` or `rmse` is selected, then the net will optimize a regression problem, and if `nll` or `cross_entropy` is chosen, then the net will optimize a classification problem.
+
+Layers can be added the network via the `NeuralNet.add_layer` function. This function's aguments are the number of nodes which should be contained within the layer and an activation function which may be used to introduce non-linearities into the operation. The currently supported activation functions are:
+
+- `linear`
+- `softmax`
+- `log_softmax`
+- `tanh`
+- `logistic`
+- `relu`
+
+See [Towards Data Science](https://towardsdatascience.com/activation-functions-and-its-types-which-is-better-a9a5310cc8f) for an explanation of the benefits of each activation function.
+
+The `add_layer()` function adds onto an internal list of layers and randomly initializes a weight matrix as well a bias vector using `rev.Tensor` for that layer.
+
+The network can be trained using the `NeuralNetwork.train` method which takes in training and validation data as well as options for `batch_size` the number of training `epochs`, the `learning_rate` for the stochastic gradient descent (SGD) update, as well a `verbose` flag which controls logging. The function goes through the data multiple times. In each iteration, the function goes over each `batch_size`-sized batch in the training data. For each batch, the loss of the network on the batch is computed, and the gradient of that loss w.r.t. the network's weights is also computed. Then the batch processing is concluded with a SGD operation which updates the weights based on the gradients for that batch. Information about the average loss (and accuracy in the case of classification problems) is also logged after epoch epoch.
+
+Once the neural network has been trained, it can be evaluated using the `.score()` function which returns the loss of the network on a particular dataset. On classifications nets, you can also use the `.accuracy()` method to evaluate accuracy. You can make predictions using the `.evaluate()` method which simply runs through the network. And for classifications networks, you can use the `.predict()` method to return the most likely classes.
+
+During evaluation, we avoid computing unnecessary gradients by using the `rev.no_grad()` context manager which prevents the computation graph from being modified when reverse mode computations.
