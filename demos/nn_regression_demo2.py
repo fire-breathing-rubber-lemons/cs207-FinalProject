@@ -18,27 +18,30 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 
 nn = NeuralNet(loss_fn='mse')
-nn.add_layer(X_train.shape[1], 50, activation='linear')
-nn.add_layer(50, 50, activation='relu')
-nn.add_layer(50, 50, activation='relu')
-nn.add_layer(50, 1, activation='linear')
+nn.add_layer(X_train.shape[1], 20, activation='linear')
+nn.add_layer(20, 20, activation='relu')
+nn.add_layer(20, 1, activation='linear')
 
 
 print('Pre-train loss on train data:', nn.score(X_train, y_train).value)
 print('Pre-train loss on test data:', nn.score(X_test, y_test).value)
 
+epochs = [0]
 train_loss = [nn.score(X_train, y_train).value]
 test_loss = [nn.score(X_test, y_test).value]
 
 for i in range(100):
     nn.train(
         X_train, y_train, X_test, y_test,
-        epochs=10, learning_rate=1e-3, verbose=False
+        batch_size=20, epochs=1, learning_rate=1e-1, verbose=False
     )
+    epochs.append(i)
     train_loss.append(nn.score(X_train, y_train).value)
     test_loss.append(nn.score(X_test, y_test).value)
 
-epochs = [10 * i for i in range(101)]
+    if (i + 1) % 10 == 0:
+        print(f'{i + 1}/100 loops completed')
+
 plt.plot(epochs, train_loss)
 plt.plot(epochs, test_loss)
 
