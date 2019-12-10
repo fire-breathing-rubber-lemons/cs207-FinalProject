@@ -438,3 +438,37 @@ The network can be trained using the `NeuralNetwork.train` method which takes in
 Once the neural network has been trained, it can be evaluated using the `.score()` function which returns the loss of the network on a particular dataset. On classifications nets, you can also use the `.accuracy()` method to evaluate accuracy. You can make predictions using the `.evaluate()` method which simply runs through the network. And for classifications networks, you can use the `.predict()` method to return the most likely classes.
 
 During evaluation, we avoid computing unnecessary gradients by using the `rev.no_grad()` context manager which prevents the computation graph from being modified when reverse mode computations.
+
+## Future Work
+
+Given more time there are a number of areas we'd like to develop further as part of the pyad library. We envision pyad being a go-to package for any number of automatic differentation related applications (as such we've already implemented forward and reverse methods to allow users to choose the optimal one for their use cases - and an implementation of Neural Network training for use in data science). As such we'd like to add futher support for:
+
+* Allowing users to further understand automatic differentation via an extended graph mode
+* Implementation of the Hessian matrix to provide users an efficient method of calculating second order derivatives
+
+### Extended Understanding Through Graph Modes
+
+Within `pyad` already exists a basic graphing class which allows the user to delve into how the reverse mode splits their function into elementary operations and calculates the final value of the function. This is useful in the sense that it gives a visual intuition for what is going on behind the scenes in the reverse mode of AD. What would be more useful however is to expand this feature to also display a graph of the derivative information - showing the flow of the derivatives as they are calculated during the forward step of the reverse mode. This secondary graph would then give users a complete understanding of both the function value and derivative values through the evaluation trace.
+
+Also to further help with understanding it would be useful to improve the visuals to show which nodes are the original variables, coloured and labeled appropriately (x, y, z for instance) and also provide a companion trace table of the values to go alongside the graph.
+
+### Calculation of the Hessian
+
+Across science and engineering there are numerous applications which require knowledge of the second order derivatives of a function. For example in image processing there is a method known as Hessian feature detection. In Hessian feature detection the second order derivative of a window of pixels is calculated along the x and y coordinate spaces to provide an understanding of the change in pixel intensities. Thresholding these second order derivative values in comparison to their neighbours results in the detection of important image features such as corners and other areas of high texture. The determinant of the Hessian is also commonly used in optimization (such as in fluid engineering to solve a series of ordinary differential equations). 
+
+To calculate the Hessian matrix we would need to differentiate the function twice with respect to each input variable. For example taking a simple function:
+
+<img src=2nd_der_orig.png width="170">
+
+The first order derivatives would be:
+
+<img src=2nd_deriv_1st_deriv.png width="270">
+
+And then the second order derivatives would be:
+
+<img src=2nd_deriv_2nd_deriv.png width="500">
+
+
+To implement this second order derivative we could use either a double forward pass system which used the forward mode twice to calculate the second order derivatives (or similarly double reverse pass) or use a combination method such as forward mode then reverse mode. Calculating the full Hessian matrix will scale with complexity of `O(n^2)` using the forward mode as each pass of forward mode scales linearly with the number of variables `n`. Similarly using a combination approach with a forward pass and then reverse pass will similarly scale `O(n^2)` as each derivative needs to be calculated with respect to each of the variables regardless. Hence this calculation will be computationally expensive and challenging to implement efficiently.
+
+One known method for performing this calculation in practice efficiently is edge pushing, specific implementation details can be found in many published papers online. In general however edge pushing leverages the computational graph created during the reverse mode and creates new adjoint variables and edges which store information on the dependencies of the second order derivatives. Attempting a similar implementation within pyad would be interesting and also hugely beneficial to users.
