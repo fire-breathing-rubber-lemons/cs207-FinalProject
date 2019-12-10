@@ -76,8 +76,20 @@ See the **Extension** section below for more details on the reverse mode.
 pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
 ```
 
-TODO: PyPI
+Through PyPi pyad will be available as pyad207 (https://pypi.org/project/pyad207/1.0.0/) through the command `pip install pyad207`. To ensure correct installation please test using a virtual environment as follows (this example uses conda but feel free to use any venv).
+```bash
+conda create --name pyad_env
+conda activate pyad_env
+conda install pip
 
+pip install pyad207
+
+echo 'import pyad' > pyad_test.py
+
+python pyad_test.py
+```
+
+This should run without error
 
 **pyad** will follow the standard Python packaging framework. To use the forward and reverse mode modules of **pyad** it will first need to be imported using:
 
