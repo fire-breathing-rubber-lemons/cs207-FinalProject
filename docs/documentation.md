@@ -88,6 +88,8 @@ In general the **pyad** package will work on an object oriented, class based app
 The user should be able to specify any differentiable function in the standard format, either a defined python function or a lambda function:
 
 ```python
+import pyad.forward_mode as fwd
+
 def test_function(x, y):
     cos_x = fwd.cos(x)
     sin_y = fwd.sin(y)
@@ -157,7 +159,6 @@ This simple additional class can be valuable in helping to understand the flow o
 This is a demonstration of the code required to plot the reverse mode graph and the example output:
 ```python
 import reverse_mode as rev
-import numpy as np
 import matplotlib.pyplot as plt
 
 x = rev.Tensor(0.5)
@@ -165,16 +166,75 @@ y = rev.Tensor(4.2)
 z = rev.Tensor(3)
 f = x * y**3 + rev.sin(x) - rev.logistic(z)
 
-#set df seed
+# set df seed
 f.backward()
 
 rev_g = rev.rev_graph()
-plot = rev_g.plot_graph([x,y,z])
+plot = rev_g.plot_graph([x, y, z])
 
 plt.show()
 ```
 <img src=reverse_graph.png width="600">
 
+
+### Demo of NeuralNet
+We also implemented a neural network library using the reverse mode for building, training, and evaluating neural networks. Here is an example of how to use the `NeuralNet` library for a sample binary classification problem.
+
+```python
+import numpy as np
+from pyad.nn import NeuralNet
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+
+np.random.seed(0)
+data = load_breast_cancer()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    data.data, data.target, train_size=0.8, random_state=0
+)
+
+model = NeuralNet(loss_fn='cross_entropy')
+model.add_layer(X_train.shape[1], 100, activation='linear')
+model.add_layer(100, 100, activation='logistic')
+model.add_layer(100, 1 + np.max(y_train), activation='linear')
+
+model.train(
+    X_train, y_train, X_test, y_test,
+    batch_size=1, learning_rate=1e-3, epochs=20
+)
+
+
+print('Predictions:', model.predict(X_test))
+```
+
+The output is
+```
+Epoch 1
+=======
+Duration: 0.547 sec
+Avg train loss: 0.636
+Avg validation loss: 0.597
+Avg train acc: 0.644
+Avg validation acc: 0.588
+
+
+...
+
+
+Epoch 20
+========
+Duration: 0.663 sec
+Avg train loss: 0.27
+Avg validation loss: 0.283
+Avg train acc: 0.897
+Avg validation acc: 0.886
+
+
+Predictions: [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 0 1 0 0 1 1 1 1 1 1 1 1 0 1 0 1 0 1 0 1
+ 0 1 0 1 1 0 1 1 0 1 1 1 0 1 1 0 1 1 1 1 1 1 0 1 0 1 1 0 1 0 0 0 1 1 0 1 1
+ 0 1 1 1 1 1 0 0 0 1 0 1 1 1 0 0 1 0 1 1 1 1 0 1 1 1 1 1 1 1 0 1 0 1 1 1 1
+ 1 0 1]
+```
 
 ## Software Organization
 
@@ -329,8 +389,6 @@ If the loss and the gradient is only computed for a subset of the training data,
 #### Implementation
 TODO: discuss how reverse mode is implemented
 
-#### Reverse Mode Demo
-TODO: demo the reverse mode
 
 ### The `pyad` Neural Network Module
 `pyad` comes with a module for building, training, and evaluating neural networks for multiple different types of machine learning problems ranging from regression to classfication.
@@ -366,61 +424,3 @@ The network can be trained using the `NeuralNetwork.train` method which takes in
 Once the neural network has been trained, it can be evaluated using the `.score()` function which returns the loss of the network on a particular dataset. On classifications nets, you can also use the `.accuracy()` method to evaluate accuracy. You can make predictions using the `.evaluate()` method which simply runs through the network. And for classifications networks, you can use the `.predict()` method to return the most likely classes.
 
 During evaluation, we avoid computing unnecessary gradients by using the `rev.no_grad()` context manager which prevents the computation graph from being modified when reverse mode computations.
-
-#### `pyad.NeuralNet` Regression Demo
-
-```python
-import numpy as np
-from pyad.nn import NeuralNet
-from sklearn.datasets import fetch_california_housing
-from sklearn.model_selection import train_test_split
-
-np.random.seed(0)
-data = fetch_california_housing()
-
-X_train, X_test, y_train, y_test = train_test_split(
-    data.data, data.target, train_size=0.8, random_state=0
-)
-
-nn = NeuralNet(loss_fn='mse')
-nn.add_layer(X_train.shape[1], 50, activation='linear')
-nn.add_layer(50, 50, activation='relu')
-nn.add_layer(50, 1, activation='linear')
-
-nn.train(
-    X_train, y_train, X_test, y_test,
-    batch_size=20, learning_rate=1e-4, epochs=10
-)
-
-
-print('Predicitons:', nn.predict(X_test))
-```
-
-
-#### `pyad.NeuralNet` Classification Demo
-```python
-import numpy as np
-from pyad.nn import NeuralNet
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-
-np.random.seed(0)
-data = load_breast_cancer()
-
-X_train, X_test, y_train, y_test = train_test_split(
-    data.data, data.target, train_size=0.8, random_state=0
-)
-
-nn = NeuralNet(loss_fn='cross_entropy')
-nn.add_layer(X_train.shape[1], 100, activation='linear')
-nn.add_layer(100, 100, activation='logistic')
-nn.add_layer(100, 1 + np.max(y_train), activation='linear')
-
-nn.train(
-    X_train, y_train, X_test, y_test,
-    batch_size=1, learning_rate=1e-3, epochs=20
-)
-
-
-print('Predictions:', nn.predict(X_test))
-```
