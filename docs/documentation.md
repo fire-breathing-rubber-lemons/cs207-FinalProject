@@ -22,8 +22,6 @@ The method of __Automatic Differentiation__ solves both these issues!
 
 It is able to compute derivatives to machine precision in a fast, efficient way.
 
-
-
 ## Background
 
 To see how automatic differentiation works, consider the following simple example:
@@ -71,12 +69,7 @@ See the **Extension** section below for more details on the reverse mode.
 
 ### How to Install
 
-**pyad** will be self contained on Github and should be installable using pip and the github ssh address.
-```bash
-pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
-```
-
-Through PyPi pyad will be available as pyad207 (https://pypi.org/project/pyad207/1.0.0/) through the command `pip install pyad207`. To ensure correct installation please test using a virtual environment as follows (this example uses conda but feel free to use any venv).
+pyad is available through PyPi  as pyad207 (https://pypi.org/project/pyad207/1.0.0/) through the command `pip install pyad207`. To ensure correct installation please test using a virtual environment as follows (this example uses conda but feel free to use any venv).
 ```bash
 conda create --name pyad_env
 conda activate pyad_env
@@ -90,6 +83,10 @@ python pyad_test.py
 ```
 
 This should run without error
+
+Alternatively pyad will be self contained on Github and should be installable using pip and the github ssh address.
+
+pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
 
 **pyad** will follow the standard Python packaging framework. To use the forward and reverse mode modules of **pyad** it will first need to be imported using:
 
@@ -143,8 +140,6 @@ def test_fun(x, y, z):
 112.17797471022807
 ```
 
-
-### Reverse Mode
 
 ### Demo of reverse mode
 ```python
@@ -206,19 +201,30 @@ cs207-FinalProject/
         __init__.py
         forward_mode.py
         reverse_mode.py
+        nn.py
         utilities/
             __init__.py
-            TODO: Add NN?
         tests/
+            __init__.py
             test_forward_mode.py
             test_forward_mode_end2end.py
             test_reverse.py
+            test_nn.py
     docs/
         documentation.md
+        milestone1.md
+        milestone2.md
+    demos/
+        forward_mode_demo.py
+        nn_classification_demo.py
+        nn_regression_demo.py
+        nn_regression_demo2.py
+        rever_mode_demo.py
+
 ```
 
 #### Modules
-`pyad` contains two core modules, one for forward mode autodifferentiation and one for reverse mode autodifferentiation. Test modules containing unit tests and end-to-end tests for forward and reverse mode are also included in the `/pyad/tests/` directory.
+`pyad` contains two core modules, one for forward mode autodifferentiation and one for reverse mode autodifferentiation. A neural network module that supports a variety of loss functions is also implemented to demonstrate the effectiveness of reverse mode. Test modules containing unit tests and end-to-end tests for forward and reverse mode, as well as neural network are also included in the `/pyad/tests/` directory.
 
 TODO: add utilities
 
@@ -226,9 +232,9 @@ TODO: add utilities
 Our test suite is located in the `tests/` directory of the package. To run our tests, we have used both `TravisCI` as well as `CodeCov`.
 
 #### Distribution
-The package will be distributed via Github and installed with pip by running:
+The package is installable from PyPI:
 ```bash
-pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
+pip install pyad207
 ```
 
 #### Packaging
@@ -271,17 +277,17 @@ The following custom elementary functions are available in both the forward and 
 
 Unlike forward mode, reverse mode differentiation tracks how every node affects one output. That is, it applies the derivative operator to every node.
 
-<img src=reverse_mode.png width="300">
+<img src=reverse_mode.png width="450">
 
 **Motivation**: The reason for implementing the reverse mode of automatic differentiation is that it is much more efficient for when the number of features (variables to differentiate with respect too) exceeds the number of elementary functions. In the case of a neural network there will commonly be tens if not hundreds of nodes each of which have interconnecting weights creating hundreds if not thousands of weights which needs to be updated. Neural networks therefore present the perfect scenario to implement and test the reverse mode of automatic differentiation through back propagation.
 
 **Intuition**: As in forward mode automatic differentiation, the key intuition here is again the chain rule:
 
-<img src=chain_rule.png width="300">
+<img src=chain_rule.png width="450">
 
  Since the chain rule is symmetric, we can flip the numerator and the denominator without changing the value. So we can rewrite the chain rule with the derivatives upside down:
 
- <img src=chain_rule_inverted.png width="300">
+ <img src=chain_rule_inverted.png width="450">
 
 Such that we have inverted the input-output roles of the variables.
 
@@ -291,7 +297,7 @@ The Reverse Mode Differentiation or Back propagation is used in machine learning
 
 Evaluating the neural network at some random starting point will produce a first calculation of Loss as a numeric value. What is then required is to work backwards from the output layer, calculating the derivative of the Loss function with respect to each neuron in the node and then update the weight based on this numeric value of the derivative and the learning rate specified.
 
-<img src=back_prop_nn.png width="300">
+<img src=back_prop_nn.png width="450">
 
 For a given weight within the node the update process is:
 
