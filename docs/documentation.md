@@ -166,7 +166,7 @@ f.backward()
 
 ### Demo of graph mode
 
-As an additional helper function to allow users to explore their function trace, pyad contains a graphing class - `rev_graph` which is included in `pyad.reverse_mode`.
+As an additional helper function to allow users to explore their function trace, pyad contains a graphing class - `RevGraph` which is included in `pyad.reverse_mode`.
 
 This simple additional class can be valuable in helping to understand the flow of elementary functions through the automatic differentation trace. Currently this class only supports the function value graph and not the graph of the derivative but this is something which we're looking to add in the future (see Future section).
 
@@ -183,7 +183,7 @@ f = x * y**3 + rev.sin(x) - rev.logistic(z)
 # set df seed
 f.backward()
 
-rev_g = rev.rev_graph()
+rev_g = rev.RevGraph()
 plot = rev_g.plot_graph([x, y, z])
 
 plt.show()

@@ -35,7 +35,6 @@ class Tensor:
             raise ValueError('Cannot call .backward() on a non-scalar')
         self.grad_value = np.array(1.0)
 
-
     def add_child(self, weight, output_tensor, symbol):
         """
         Adds a node to the computation graph.
@@ -359,8 +358,8 @@ def exp(x):
 
 
 def logistic(x):
-    f = lambda x: 1/(1+np.exp(-x))
-    df = lambda x: np.exp(-x)/(1+np.exp(-x))**2	
+    f = lambda x: 1 / (1 + np.exp(-x))
+    df = lambda x: np.exp(-x) / (1 + np.exp(-x)) ** 2
     return _elementary_op(x, f, df, 'logistic')
 
 
@@ -385,68 +384,69 @@ def sqrt(x):
 def cbrt(x):
     return _elementary_op(x, np.cbrt, lambda x: 1 / (3 * x ** (2/3)), 'cbrt')
 
-# Graph mode
-class rev_graph:
-    
+
+###################################
+# Computation Graph Visualization #
+###################################
+class RevGraph:
     def __init__(self):
         self.connections = []
         self.formatted_connections = []
         self.unique_nodes = []
         self.operations = []
-        
+
     def append_connect(self, value):
         from_node = value[0]
         to_node = value[1]
-        
+
         all_from_nodes = [x[0] for x in self.connections]
         all_to_nodes = [x[1] for x in self.connections]
-        
+
         all_from_fnodes = [x[0] for x in self.formatted_connections]
         all_to_fnodes = [x[1] for x in self.formatted_connections]
-        
+
         # FROM NODE
         if from_node not in self.unique_nodes:
             self.unique_nodes.append(from_node)
-        
+
         if from_node in all_from_nodes:
             index = all_from_nodes.index(from_node)
             node_name_from = all_from_fnodes[index]
-            
+
         elif from_node in all_to_nodes:
             index = all_to_nodes.index(from_node)
             node_name_from = all_to_fnodes[index]
-        
+
         else:
             node_name_from = 'x{}: {:.2f}'.format(len(self.unique_nodes), from_node)
-            
+
         # TO NODE
         if to_node not in self.unique_nodes:
             self.unique_nodes.append(to_node)
-        
+
         if to_node in all_from_nodes:
             index = all_from_nodes.index(to_node)
             node_name_to = all_from_fnodes[index]
-            
+
         elif to_node in all_to_nodes:
             index = all_to_nodes.index(to_node)
             node_name_to = all_to_fnodes[index]
-        
+
         else:
             node_name_to = 'x{}: {:.2f}'.format(len(self.unique_nodes), to_node)
-            
+
         self.connections.append(value)
         self.formatted_connections.append([node_name_from, node_name_to])
 
     def search_path(self, var):
         current_node = var
         for child in var.children:
-            next_node = child[1] 
+            next_node = child[1]
             self.append_connect([current_node.value, next_node.value])
             self.operations.append(child[2])
             self.search_path(next_node)
 
     def plot_graph(self, vars):
-        
         # Refresh graph
         self.connections = []
         self.formatted_connections = []
@@ -458,7 +458,7 @@ class rev_graph:
 
         edges = self.formatted_connections
         ops = self.operations
-            
+
         labels_dict = {}
         for key, value in zip(edges, ops):
             key_formatted = (key[0], key[1])
@@ -469,10 +469,9 @@ class rev_graph:
         G.add_edges_from(edges)
         pos = nx.spring_layout(G, iterations=500)
         nx.draw_networkx_edge_labels(G, pos, edge_labels=labels_dict, label_pos=0.5)
-        nx.draw_networkx(G, pos, with_labels=False, node_size = 200, ax = graph)
+        nx.draw_networkx(G, pos, with_labels=False, node_size=200, ax=graph)
 
-        for k,v in pos.items():
-            x,y=v
-            graph.text(x+0.01,y+0.03,s=k)
-        
+        for k, v in pos.items():
+            x, y = v
+            graph.text(x + 0.01, y + 0.03, s=k)
         return graph

@@ -9,7 +9,8 @@ import pytest
 
 def test_case_base_trigonometric():
     """
-    Try some end to end testing using a complex trigonometric function of sin, cos and tan
+    Try some end to end testing using a complex trigonometric function of
+    sin, cos and tan
     """
     x = fwd.var('x', 1)
     y = fwd.var('y', 0.5)
@@ -419,7 +420,8 @@ def test_mul_mvd():
 
 def test_tensor_function():
     """
-    Check that the tensor wrapper around Tensor correctly returns a Tensor object
+    Check that the tensor wrapper around Tensor correctly returns a Tensor
+    object
     """
     test_tensor1 = fwd.tensor(5)
 
@@ -696,7 +698,8 @@ def test_iter():
     with pytest.raises(TypeError):
         iter(v1)
 
-    v2 = fwd.Tensor([0, 1], d=fwd.MultivariateDerivative({'x': [1, 2], 'y': [3, 4]}))
+    d = {'x': [1, 2], 'y': [3, 4]}
+    v2 = fwd.Tensor([0, 1], d=fwd.MultivariateDerivative(d))
     res = []
     for x in v2:
         res.append(x)
