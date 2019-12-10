@@ -263,17 +263,17 @@ The following custom elementary functions are available in both the forward and 
 
 Unlike forward mode, reverse mode differentiation tracks how every node affects one output. That is, it applies the derivative operator to every node.
 
-<img src=reverse_mode.png width="300">
+<img src=reverse_mode.png width="450">
 
 **Motivation**: The reason for implementing the reverse mode of automatic differentiation is that it is much more efficient for when the number of features (variables to differentiate with respect too) exceeds the number of elementary functions. In the case of a neural network there will commonly be tens if not hundreds of nodes each of which have interconnecting weights creating hundreds if not thousands of weights which needs to be updated. Neural networks therefore present the perfect scenario to implement and test the reverse mode of automatic differentiation through back propagation.
 
 **Intuition**: As in forward mode automatic differentiation, the key intuition here is again the chain rule:
 
-<img src=chain_rule.png width="300">
+<img src=chain_rule.png width="450">
 
  Since the chain rule is symmetric, we can flip the numerator and the denominator without changing the value. So we can rewrite the chain rule with the derivatives upside down:
 
- <img src=chain_rule_inverted.png width="300">
+ <img src=chain_rule_inverted.png width="450">
 
 Such that we have inverted the input-output roles of the variables.
 
@@ -283,7 +283,7 @@ The Reverse Mode Differentiation or Back propagation is used in machine learning
 
 Evaluating the neural network at some random starting point will produce a first calculation of Loss as a numeric value. What is then required is to work backwards from the output layer, calculating the derivative of the Loss function with respect to each neuron in the node and then update the weight based on this numeric value of the derivative and the learning rate specified.
 
-<img src=back_prop_nn.png width="300">
+<img src=back_prop_nn.png width="450">
 
 For a given weight within the node the update process is:
 
