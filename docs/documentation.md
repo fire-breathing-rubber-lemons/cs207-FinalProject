@@ -22,8 +22,6 @@ The method of __Automatic Differentiation__ solves both these issues!
 
 It is able to compute derivatives to machine precision in a fast, efficient way.
 
-
-
 ## Background
 
 To see how automatic differentiation works, consider the following simple example:
@@ -71,13 +69,10 @@ See the **Extension** section below for more details on the reverse mode.
 
 ### How to Install
 
-**pyad** will be self contained on Github and should be installable using pip and the github ssh address.
+To install the package, use the following commend in the terminal.
 ```bash
-pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
+pip install pyad207
 ```
-
-TODO: PyPI
-
 
 **pyad** will follow the standard Python packaging framework. To use the forward and reverse mode modules of **pyad** it will first need to be imported using:
 
@@ -131,8 +126,6 @@ def test_fun(x, y, z):
 112.17797471022807
 ```
 
-
-### Reverse Mode
 
 ### Demo of reverse mode
 ```python
@@ -194,19 +187,30 @@ cs207-FinalProject/
         __init__.py
         forward_mode.py
         reverse_mode.py
+        nn.py
         utilities/
             __init__.py
-            TODO: Add NN?
         tests/
+            __init__.py
             test_forward_mode.py
             test_forward_mode_end2end.py
             test_reverse.py
+            test_nn.py
     docs/
         documentation.md
+        milestone1.md
+        milestone2.md
+    demos/
+        forward_mode_demo.py
+        nn_classification_demo.py
+        nn_regression_demo.py
+        nn_regression_demo2.py
+        rever_mode_demo.py
+
 ```
 
 #### Modules
-`pyad` contains two core modules, one for forward mode autodifferentiation and one for reverse mode autodifferentiation. Test modules containing unit tests and end-to-end tests for forward and reverse mode are also included in the `/pyad/tests/` directory.
+`pyad` contains two core modules, one for forward mode autodifferentiation and one for reverse mode autodifferentiation. A neural network module that supports a variety of loss functions is also implemented to demonstrate the effectiveness of reverse mode. Test modules containing unit tests and end-to-end tests for forward and reverse mode, as well as neural network are also included in the `/pyad/tests/` directory.
 
 TODO: add utilities
 
@@ -214,9 +218,9 @@ TODO: add utilities
 Our test suite is located in the `tests/` directory of the package. To run our tests, we have used both `TravisCI` as well as `CodeCov`.
 
 #### Distribution
-The package will be distributed via Github and installed with pip by running:
+The package is installable from PyPI:
 ```bash
-pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
+pip install pyad207
 ```
 
 #### Packaging
