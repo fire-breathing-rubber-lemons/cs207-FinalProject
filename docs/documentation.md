@@ -84,7 +84,9 @@ This should run without error
 
 Alternatively pyad will be self contained on Github and should be installable using pip and the github ssh address.
 
+```bash
 pip install git+git://github.com/fire-breathing-rubber-lemons/cs207-FinalProject
+```
 
 **pyad** will follow the standard Python packaging framework. To use the forward and reverse mode modules of **pyad** it will first need to be imported using:
 
@@ -390,7 +392,7 @@ The Reverse Mode Differentiation or Back propagation is used in machine learning
 
 Evaluating the neural network at some random starting point will produce a first calculation of Loss as a numeric value. What is then required is to work backwards from the output layer, calculating the derivative of the Loss function with respect to each neuron in the node and then update the weight based on this numeric value of the derivative and the learning rate specified.
 
-<img src=back_prop_nn.png width="450">
+<img src=back_prop_nn.png width="500">
 
 For a given weight within the node the update process is:
 
