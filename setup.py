@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='pyad207',
     description='A simple package for auto-differentiation.',
-    version='1.0.0',
+    version='1.0.1',
     packages=find_packages(),
     url='https://github.com/fire-breathing-rubber-lemons/cs207-FinalProject',
     author='CS207 Project Group 10',

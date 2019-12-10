@@ -69,7 +69,7 @@ See the **Extension** section below for more details on the reverse mode.
 
 ### How to Install
 
-pyad is available through PyPi  as pyad207 (https://pypi.org/project/pyad207/1.0.0/) through the command `pip install pyad207`. To ensure correct installation please test using a virtual environment as follows (this example uses conda but feel free to use any venv).
+pyad is available through PyPi  as pyad207 (https://pypi.org/project/pyad207/) through the command `pip install pyad207`. To ensure correct installation please test using a virtual environment as follows (this example uses conda but feel free to use any venv).
 ```bash
 conda create --name pyad_env
 conda activate pyad_env
