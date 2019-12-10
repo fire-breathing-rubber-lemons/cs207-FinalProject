@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='pyad',
+    name='pyad207',
     description='A simple package for auto-differentiation.',
     version='1.0.0',
     packages=find_packages(),
