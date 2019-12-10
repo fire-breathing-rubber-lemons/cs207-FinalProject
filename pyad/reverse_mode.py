@@ -389,6 +389,31 @@ def cbrt(x):
 # Computation Graph Visualization #
 ###################################
 class RevGraph:
+    """
+    RevGraph class to build and store the network graph for the trace of the reverse
+    mode of AD. Currently only permits the function trace and not the derivative
+    trace
+
+    Parameters
+    ----------
+    None - revgraph is initialized as a blank graph
+
+    Attributes
+    ----------
+    connections : list
+        Internal storage of the edges of the graph (connects from x1 to x2 for example)
+
+    formatted_connections : list
+        Internal storage of the edges of the graph - mirroring the above except correctly
+        string formatted with the note names and values to 2 decimal places
+
+    unique_nodes : list
+        List of the unique nodes contained within the full graph
+
+    operations : list
+        List of the operations for each connection listed above
+
+    """
     def __init__(self):
         self.connections = []
         self.formatted_connections = []
@@ -396,6 +421,21 @@ class RevGraph:
         self.operations = []
 
     def append_connect(self, value):
+        """
+        revgraph append_connect - given two nodes, add the edge to the node connection
+        where the node has appeared before assign it the same formatted name as previously
+        aka - x1 should still be x1, if not assign the next unassigned name.
+
+        Parameters
+        ----------
+        value : list
+            Two graph nodes in a list, these should values of the variables from the trace
+
+        Returns
+        -------
+        None
+
+        """
         from_node = value[0]
         to_node = value[1]
 
@@ -439,6 +479,20 @@ class RevGraph:
         self.formatted_connections.append([node_name_from, node_name_to])
 
     def search_path(self, var):
+        """
+        revgraph search_path - recursively traverse the children of a given variable in the
+        trace and pass each pair of nodes to the append_connect function.
+
+        Parameters
+        ----------
+        var : Tensor
+            Tensor variable for which the connections will be calculated for
+
+        Returns
+        -------
+        None
+
+        """
         current_node = var
         for child in var.children:
             next_node = child[1]
@@ -447,6 +501,21 @@ class RevGraph:
             self.search_path(next_node)
 
     def plot_graph(self, vars):
+        """
+        revgraph plot_graph - wrapper to iteratively call search path on a number
+        of variables to create the full graph of the trace. Then build and format the 
+        actual plot using networkx before returning a set of axes.
+
+        Parameters
+        ----------
+        vars : list
+            list of Tensor variables for which the connections will be calculated for
+
+        Returns
+        -------
+        graph : matplotlib.pyplot Axes
+
+        """
         # Refresh graph
         self.connections = []
         self.formatted_connections = []
