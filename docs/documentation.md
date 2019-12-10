@@ -77,9 +77,7 @@ conda install pip
 
 pip install pyad207
 
-echo 'import pyad' > pyad_test.py
-
-python pyad_test.py
+python -c 'import pyad'
 ```
 
 This should run without error
@@ -321,12 +319,12 @@ The user can access the value of a Tensor object `t` using `t.value`. The user a
 ##### Core dependencies
 We use `numpy` arrays to hold the `value` attribute of the `Tensor` object as well as the values of derivatives in the `variables` dictionary attribute of the `MultivariateDerivative` object. We additionally use the `numpy` implementations of trigonometric, exponential, logarithmic and absolute value functions to perform efficient mathematical computations in our custom functions for elementary operations described below.
 
+For our extension, we also make use of `matplotlib` for visualizing charts and `networkx` for visualizing graphs.
+
 ##### Other dependencies
 We use `pytest` to perform unit testing.
 
-For our extension, we also make use of `matplotlib` for visualizing charts and `networkx` for visualizing graphs.
-
-For our demos, we use `scikit-learn` to load sample datasets.
+For our demos, we use `scikit-learn` to load sample datasets, but this is not strictly required for the package to function, so we do not include it in the list of requirements.
 
 #### Elementary functions and derivative computation
 
@@ -401,7 +399,22 @@ For a given weight within the node the update process is:
 If the loss and the gradient is only computed for a subset of the training data, then this weight update is called [Stochastic Gradient Descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent).
 
 #### Implementation
-The reverse mode implementation is similar to forward mode, where the `Tensor` class takes in input values, stores function value and derivative information, and support basic arithmatic and comparison operations. The users can access input values by calling `x.value`, and its derivative by calling `x.grad`. We've also added a `rev_graph` class so that the users can easily visualize function trace. 
+The reverse mode implementation is located in `reverse_mode.py` and it is similar to forward mode, but there are a number of significant differents. First, there is now only a single `Tensor` class which only takes in an input value.
+
+A Tensor's value can be accessed with `x.value`, but to extract the derivative of that Tensor, things are not quite as simple.
+
+Operations on the `Tensor`s dynamically build a computation graph.
+
+Whenever the function is computed, `func_res.backward()` can be called on the output Tensor to seed the derivative so that gradient computations of the inputs to the `func_res` may use that as a base. We add the constraint that you may only call `.backward()` on a scalar output. This in-effect forces that we may never differentiate w.r.t. a non-scalar. This is because if we supported taking the gradient w.r.t. a vector of size `m` or matrix of size `m x m`, then the time and space complexity of the reverse mode would grow by a factor of `O(m)` or `O(m^2)`. This can be prohibitively high whenever there are a large number of inputs such as in a neural network, so we decided that supporting this limited use case was not worth the implementation trouble.
+
+Once the output Tensor has been seeded, it is then possible to compute gradients. Whenever an input `x` accesses the property `x.grad`, the gradient of `x` w.r.t. to `func_res` is computed by recursively traversing through the computation graph and performing the appropriate backward operation to compute the derivative. This gradient is cached so that subsequent accesses of `x.grad` need not perform all of that computation again.
+
+The reverse mode supports all of the basic arithmetic operators as well as all of the same elementary functions that were supported by the forward mode. However, the reverse mode also supports matrix multiplication, which we deemed was impractical in the forward mode due to its overly high time and space complexity requirements: the multiplication of two `n x n` matrices in forward mode would require at least `O(n^4)` time and space even if the final output was just a scalar.
+
+The reverse mode also support getting and setting arbitrary indexes as well as all of the basic comparison operators in the same way as the forward mode.
+
+We've also added a `RevGraph` class so that the users can easily visualize function trace.
+
 
 ### The `pyad` Neural Network Module
 `pyad` comes with a module for building, training, and evaluating neural networks for multiple different types of machine learning problems ranging from regression to classfication.
@@ -453,7 +466,7 @@ Also to further help with understanding it would be useful to improve the visual
 
 ### Calculation of the Hessian
 
-Across science and engineering there are numerous applications which require knowledge of the second order derivatives of a function. For example in image processing there is a method known as Hessian feature detection. In Hessian feature detection the second order derivative of a window of pixels is calculated along the x and y coordinate spaces to provide an understanding of the change in pixel intensities. Thresholding these second order derivative values in comparison to their neighbours results in the detection of important image features such as corners and other areas of high texture. The determinant of the Hessian is also commonly used in optimization (such as in fluid engineering to solve a series of ordinary differential equations). 
+Across science and engineering there are numerous applications which require knowledge of the second order derivatives of a function. For example in image processing there is a method known as Hessian feature detection. In Hessian feature detection the second order derivative of a window of pixels is calculated along the x and y coordinate spaces to provide an understanding of the change in pixel intensities. Thresholding these second order derivative values in comparison to their neighbours results in the detection of important image features such as corners and other areas of high texture. The determinant of the Hessian is also commonly used in optimization (such as in fluid engineering to solve a series of ordinary differential equations).
 
 To calculate the Hessian matrix we would need to differentiate the function twice with respect to each input variable. For example taking a simple function:
 
