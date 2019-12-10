@@ -277,7 +277,18 @@ Also to further help with understanding it would be useful to improve the visual
 
 Across science and engineering there are numerous applications which require knowledge of the second order derivatives of a function. For example in image processing there is a method known as Hessian feature detection. In Hessian feature detection the second order derivative of a window of pixels is calculated along the x and y coordinate spaces to provide an understanding of the change in pixel intensities. Thresholding these second order derivative values in comparison to their neighbours results in the detection of important image features such as corners and other areas of high texture. The determinant of the Hessian is also commonly used in optimization (such as in fluid engineering to solve a series of ordinary differential equations). 
 
-To calculate the Hessian matrix we would need to differentiate the function twice with respect to each input variable. For example 
+To calculate the Hessian matrix we would need to differentiate the function twice with respect to each input variable. For example taking a simple function:
+
+<img src=2nd_der_orig.png width="170">
+
+The first order derivatives would be:
+
+<img src=2nd_deriv_1st_deriv.png width="270">
+
+And then the second order derivatives would be:
+
+<img src=2nd_deriv_2nd_deriv.png width="500">
+
 
 To implement this second order derivative we could use either a double forward pass system which used the forward mode twice to calculate the second order derivatives (or similarly double reverse pass) or use a combination method such as forward mode then reverse mode. Using forward mode twice has a scales in complexity of `O(n^2)` as each pass of forward mode scales linearly with the number of variables `n`. Performing the forward then reverse method would scale in complexity of `O(n*m)` as the reverse mode scales linearly with the number of output variables `m`.
 
