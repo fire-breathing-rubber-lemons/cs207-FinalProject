@@ -387,8 +387,7 @@ For a given weight within the node the update process is:
 If the loss and the gradient is only computed for a subset of the training data, then this weight update is called [Stochastic Gradient Descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent).
 
 #### Implementation
-TODO: discuss how reverse mode is implemented
-
+The reverse mode implementation is similar to forward mode, where the `Tensor` class takes in input values, stores function value and derivative information, and support basic arithmatic and comparison operations. The users can access input values by calling `x.value`, and its derivative by calling `x.grad`. We've also added a `rev_graph` class so that the users can easily visualize function trace. 
 
 ### The `pyad` Neural Network Module
 `pyad` comes with a module for building, training, and evaluating neural networks for multiple different types of machine learning problems ranging from regression to classfication.
