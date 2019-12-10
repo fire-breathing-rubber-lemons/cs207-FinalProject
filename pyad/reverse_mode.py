@@ -22,13 +22,29 @@ class Tensor:
 
     def backward(self):
         """
-        A function that seeds in the derivative of a function with respect to itself, i.e. df/df = 1
+        A function that seeds in the derivative of a function with respect to
+        itself, i.e. df/df = 1.
+
+        backward() can only be called on a scalar Tensor. pyad.reverse_mode
+        does not support computing the gradients of vector outputs
         """
         if self.value.shape != ():
             raise ValueError('Cannot call .backward() on a non-scalar')
         self.grad_value = np.array(1.0)
 
     def add_child(self, weight, output_tensor):
+        """
+        Adds a node to the computation graph.
+
+        Parameters
+        ----------
+        weight: callable | np.array
+            Specifies how the gradient w.r.t. the output should be
+            calculated
+
+        output_tensor: Tensor
+            A Tensor that is dependent on this node
+        """
         if not Tensor._gradients_disabled:
             self.children.append((weight, output_tensor))
 
@@ -93,14 +109,34 @@ class Tensor:
         return f'Tensor({self.value}, D({self.grad_value}))'
 
     def reset_grad(self):
+        """
+        Resets the gradient of the Tensor.
+        """
         self.grad_value = None
         self.children = []
 
     @property
     def shape(self):
+        """
+        Returns the shape of the underlying np.array
+        """
         return self.value.shape
 
     def sum(self, axis=None):
+        """
+        Returns the sum of all of the elements in the Tensor. Optionally,
+        along a particular axis.
+
+        Parameters
+        ----------
+        axis: int | None
+            Which axis should the sum() be taken over
+
+        Returns
+        -------
+        Tensor
+            A new Tensor that has had the sum() operation applied
+        """
         def sum_backward(out_grad):
             return np.broadcast_to(out_grad, self.shape)
 
@@ -109,9 +145,15 @@ class Tensor:
         return z
 
     def mean(self):
+        """
+        Returns the arithmetic mean of all of the elements in the Tensor
+        """
         return self.sum() / self.value.size
 
     def prod(self):
+        """
+        Returns the product of all of the elements in the Tensor
+        """
         if self.shape == ():
             return self
 
@@ -231,6 +273,10 @@ class Tensor:
 
 
 class no_grad:
+    """
+    This is a context manager. Within the no_grad() context, reverse_mode
+    operations will not add onto the computation graph.
+    """
     def __enter__(self):
         Tensor._gradients_disabled = True
 
